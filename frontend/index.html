@@ -5,40 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Cadastro - Metroform</title>
-</head>
+
 <body>
-    <form>
-        <table>
-            <tbody>
-    <header class="holder">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white
+            
+
+            
+        }
+
+        .painel-cadastro {
+             background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 360px; 
+
+        }
+
+        .holder h1 {
+            text-aling: center;
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #333333;
+
+        }
+
+        .centralizado {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        .centralizado input,
+        .centralizado textarea{
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            font-family: Arial, sans-serif;
+
+        }
+
+        .centralizado textarea {
+        height: 100px;
+        resize: vertical;
+
+        }
+    .centralizado input:focus, 
+    .centralizado textarea:focus {
+        border-color: red;
+    }
+    </style>
+    </head>
+    <body>
+<form class="painel-cadastro>
+ <header class="holder">
         <h1 style="text-align: center;";>Cadastro</h1>
 
     </header class="holder">
 
-
       <div class="centralizado">
-    <input type="text" placeholder="Nome">
+    <input type="text" placeholder="Nome...">
     </div>
+
     <div class="centralizado">
-    <input type="text" placeholder="Email">
+    <input type="text" placeholder="Email...">
     </div>
+
     <div class="centralizado">
-    <input type="text" placeholder="Whatsapp">
+    <input type="text" placeholder="Whatsapp...">
     </div>
+
     <div class="centralizado">
-    <input type="text" placeholder="Mensagem">
+    <input type="text" placeholder="Mensagem...">
     </div>
     
 
-<style>
-         .centralizado {
-    display: flex;
-    justify-content: center;
-  }
-      </style>
-      </tbody>
-      </table>
-</form>
+     </form>
 
 </body>
 </html>
