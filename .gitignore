@@ -1,3 +1,5 @@
+.env
+.vscode/launch.json
 api/HELP.md
 api/target/
 api/.mvn/wrapper/maven-wrapper.jar

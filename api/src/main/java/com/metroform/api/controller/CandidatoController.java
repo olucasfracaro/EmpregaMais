@@ -25,9 +25,13 @@ public class CandidatoController {
     }
 
     @GetMapping("/candidato/{id}")
-    public Candidato getCandidato(@PathVariable Integer id) {
+    public ResponseEntity<Candidato> getCandidato(@PathVariable Integer id) {
         Optional<Candidato> candidato = candidatoService.buscarCandidatoPorId(id);
-        return candidato.orElse(null);
+        if (candidato.isPresent()) {
+            return ResponseEntity.ok(candidato.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/candidatos")
@@ -39,9 +43,17 @@ public class CandidatoController {
     @PostMapping("/candidato")
     public ResponseEntity<Candidato> criarCandidato(@RequestBody Candidato candidato) {
         Candidato novoCandidato = new Candidato();
+        if (candidato.getCurriculoPath() == null ||
+            candidato.getCurriculoPath().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         novoCandidato.setNome(candidato.getNome());
         novoCandidato.setEmail(candidato.getEmail());
         novoCandidato.setTelefone(candidato.getTelefone());
+        novoCandidato.setMensagem(candidato.getMensagem());
+        novoCandidato.setCurriculoPath(candidato.getCurriculoPath());
+        novoCandidato.setStatus(candidato.getStatus());
 
         Candidato salvo = candidatoService.criarCandidato(novoCandidato);
         return new ResponseEntity<>(salvo, HttpStatus.CREATED);
