@@ -85,25 +85,25 @@
     </style>
     </head>
     <body>
-<form class="painel-cadastro">
+<form class="painel-cadastro" id="PainelVinicius">
  <header class="holder">
         <h1 style="text-align: center;">Cadastro</h1>
     </header class="holder">
 
       <div class="centralizado">
-    <input type="text" placeholder="Nome...">
+    <input type="text" id="Nome" placeholder="Nome..." required>
     </div>
 
     <div class="centralizado">
-    <input type="text" placeholder="Email...">
+    <input type="text" id="Email" placeholder="Email..." required>
     </div>
 
     <div class="centralizado">
-    <input type="text" placeholder="Whatsapp...">
+    <input type="text" id="Whatsapp" placeholder="Whatsapp..." required>
     </div>
 
     <div class="centralizado">
-    <textarea placeholder="Mensagem..."></textarea>
+    <textarea id="Mensagem" placeholder="Mensagem..." required></textarea>
     </div>
     
     <div>
@@ -112,5 +112,22 @@
 
      </form>
 
+     <script>
+        document.getElementById('PainelVinicius').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const Nome = document.getElementById("Nome").value;
+            const Email = document.getElementById("Email").value;
+            const Whatsapp = document.getElementById("Whatsapp").value;
+            const Mensagem = document.getElementById("Mensagem").value;
+
+            alert("Cadastro realizado com sucesso!\n\nNome: ${Nome}\nEmail ${Email}");
+
+            this.reset();
+
+        });
+
+        
+     </script>
 </body>
 </html>
