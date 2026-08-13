@@ -33,7 +33,7 @@
         }
 
         .holder h1 {
-            text-aling: center;
+            text-align: center;
             margin-top: 0;
             margin-bottom: 25px;
             color: #333333;
@@ -66,13 +66,28 @@
     .centralizado textarea:focus {
         border-color: red;
     }
+    .btn-cadastrar {
+        width: 100%;
+        padding: 12px;
+        background-color: red;
+        color: white;
+        border: none;
+        border-radius: 7px;
+        font-size: 17px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .btn-cadastrar:hover {
+        background-color: darkred;
+    }
+    
     </style>
     </head>
     <body>
-<form class="painel-cadastro>
+<form class="painel-cadastro">
  <header class="holder">
-        <h1 style="text-align: center;";>Cadastro</h1>
-
+        <h1 style="text-align: center;">Cadastro</h1>
     </header class="holder">
 
       <div class="centralizado">
@@ -88,9 +103,12 @@
     </div>
 
     <div class="centralizado">
-    <input type="text" placeholder="Mensagem...">
+    <textarea placeholder="Mensagem..."></textarea>
     </div>
     
+    <div>
+        <button type="submit" class="btn-cadastrar">Enviar</button>
+    </div>
 
      </form>
 
