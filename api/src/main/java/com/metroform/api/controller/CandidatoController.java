@@ -1,5 +1,6 @@
 package com.metroform.api.controller;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,6 +26,12 @@ public class CandidatoController {
         this.candidatoService = candidatoService;
     }
 
+    @GetMapping("/candidatos")
+    public ResponseEntity<?> buscarTodos() {
+        List<Candidato> candidatos = candidatoService.buscarCandidatos();
+        return ResponseEntity.ok(candidatos);
+    }
+
     @GetMapping("/candidato/{id}")
     public ResponseEntity<Candidato> getCandidato(@PathVariable Integer id) {
         Optional<Candidato> candidato = candidatoService.buscarCandidatoPorId(id);
@@ -32,12 +40,6 @@ public class CandidatoController {
         } else {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    @GetMapping("/candidatos")
-    public ResponseEntity<?> buscarTodos() {
-        List<Candidato> candidatos = candidatoService.buscarCandidatos();
-        return ResponseEntity.ok(candidatos);
     }
 
     @PostMapping("/candidato")
@@ -57,6 +59,26 @@ public class CandidatoController {
 
         Candidato salvo = candidatoService.criarCandidato(novoCandidato);
         return new ResponseEntity<>(salvo, HttpStatus.CREATED);
+    }
+    
+    @PutMapping("/candidato/{id}")
+    public ResponseEntity<Candidato> atualizarCandidato(@PathVariable Integer id, @RequestBody Candidato candidato) {
+        Optional<Candidato> candidatoExistente = candidatoService.buscarCandidatoPorId(id);
+        if (candidatoExistente.isPresent()) {
+            Candidato candidatoAtualizado = candidatoExistente.get();
+            candidatoAtualizado.setNome(candidato.getNome());
+            candidatoAtualizado.setEmail(candidato.getEmail());
+            candidatoAtualizado.setTelefone(candidato.getTelefone());
+            candidatoAtualizado.setMensagem(candidato.getMensagem());
+            candidatoAtualizado.setCurriculoPath(candidato.getCurriculoPath());
+            candidatoAtualizado.setStatus(candidato.getStatus());
+            candidatoAtualizado.setUpdatedAt(OffsetDateTime.now());
+
+            Candidato salvo = candidatoService.atualizarCandidato(candidatoAtualizado);
+            return ResponseEntity.ok(salvo);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/candidato/{id}")

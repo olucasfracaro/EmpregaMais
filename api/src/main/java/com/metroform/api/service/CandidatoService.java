@@ -19,6 +19,10 @@ public class CandidatoService {
         return repository.save(candidato);
     }
 
+    public Candidato atualizarCandidato(Candidato candidato) {
+        return repository.save(candidato);
+    }
+
     public boolean deletarCandidato(Integer id) {
         if (repository.existsById(id)) {
             repository.deleteById(id);
