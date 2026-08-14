@@ -1,4 +1,6 @@
-package com.metroform.api.dto;
+package com.metroform.api.Candidato;
+
+import java.time.OffsetDateTime;
 
 public record CandidatoDTO(
     Integer id,
@@ -8,6 +10,6 @@ public record CandidatoDTO(
     String mensagem,
     String curriculoPath,
     String status,
-    String createdAt,
-    String updatedAt
+    OffsetDateTime createdAt,
+    OffsetDateTime updatedAt
 ) {}

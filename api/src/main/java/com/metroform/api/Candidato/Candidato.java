@@ -1,8 +1,10 @@
-package com.metroform.api.model;
+package com.metroform.api.Candidato;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.OffsetDateTime;
 
@@ -10,6 +12,7 @@ import java.time.OffsetDateTime;
 @Table(name = "candidatos")
 public class Candidato {
 
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
