@@ -11,10 +11,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
-            );
+                .requestMatchers(
+                    "/",
+                    "/index.html",
+                    "/cadastroCandidato.js",
+                    "/style.css",
+                    "/config.local.js",
+                    "/candidato"
+                ).permitAll()
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form.permitAll());
 
         return http.build();
     }

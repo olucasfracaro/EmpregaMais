@@ -1,4 +1,7 @@
 .env
+node_modules/
+frontend/config.local.js
+
 .vscode/launch.json
 api/HELP.md
 api/target/

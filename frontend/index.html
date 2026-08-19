@@ -4,110 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cadastro - Metroform</title>
-  <style>
-    :root {
-      --primary-color: #e50914;
-      --primary-hover: #b20710;
-      --bg-color: #f4f6f8;
-      --card-bg: #ffffff;
-      --text-color: #222222;
-      --border-color: #cccccc;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .painel-cadastro {
-      background-color: var(--card-bg);
-      padding: 32px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-      width: 100%;
-      max-width: 400px;
-    }
-
-    .painel-header {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .painel-header h1 {
-      font-size: 1.75rem;
-      color: var(--text-color);
-    }
-
-    .campo-grupo {
-      margin-bottom: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .campo-grupo label {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #555555;
-    }
-
-    .campo-grupo input,
-    .campo-grupo textarea {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 0.95rem;
-      font-family: inherit;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .campo-grupo textarea {
-      height: 110px;
-      resize: vertical;
-    }
-
-    .campo-grupo input:focus, 
-    .campo-grupo textarea:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.2);
-    }
-
-    .btn-cadastrar {
-      width: 100%;
-      padding: 14px;
-      background-color: var(--primary-color);
-      color: #ffffff;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.2s, transform 0.1s;
-      margin-top: 8px;
-    }
-
-    .btn-cadastrar:hover {
-      background-color: var(--primary-hover);
-    }
-
-    .btn-cadastrar:active {
-      transform: scale(0.98);
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -122,13 +19,13 @@
     </div>
 
     <div class="campo-grupo">
-      <label for="Email">E-mail</label>
-      <input type="email" id="Email" placeholder="seu@email.com" required>
+      <label for="Telefone">Telefone</label>
+      <input type="tel" id="Telefone" placeholder="(00) 00000-0000" required>
     </div>
 
     <div class="campo-grupo">
-      <label for="Whatsapp">WhatsApp</label>
-      <input type="tel" id="Whatsapp" placeholder="(00) 00000-0000" required>
+      <label for="Email">E-mail</label>
+      <input type="email" id="Email" placeholder="seu@email.com" required>
     </div>
 
     <div class="campo-grupo">
@@ -145,24 +42,7 @@
 
   </form>
 
-  <script>
-    document.getElementById('PainelManeiro').addEventListener('submit', function(event) {
-      event.preventDefault();
-
-      const dados = {
-        nome: document.getElementById("Nome").value,
-        email: document.getElementById("Email").value,
-        whatsapp: document.getElementById("Whatsapp").value,
-        mensagem: document.getElementById("Mensagem").value,
-        curriculo: document.getElementById("Currículo").value
-      };
-
-      console.log("Dados enviados:", dados);
-      alert("Cadastro realizado com sucesso!");
-
-      this.reset();
-    });
-  </script>
+  <script type="module" src="cadastroCandidato.js"></script>
 
 </body>
 </html>
