@@ -1,4 +1,4 @@
-package com.metroform.api.Candidato;
+package com.empregamais.api.Candidato;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;

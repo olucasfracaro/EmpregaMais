@@ -1,4 +1,4 @@
-package com.metroform.api.config;
+package com.empregamais.api.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

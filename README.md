@@ -1,4 +1,4 @@
-# Metroform - Sistema de Recrutamento Inteligente
+# EmpregaMais - Sistema de Recrutamento Inteligente
 
 <p align="center">
   <img src="https://brasil.un.org/profiles/undg_country/themes/custom/undg/images/SDGs/pt-br/SDG-8.svg" alt="ODS 8" width="180" />
