@@ -13,7 +13,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .addServersItem(
                         new Server()
-                                .url("https://localhost:8080")
+                                .url("http://localhost:8080")
                                 .description("Servidor local")
                 )
                 .addServersItem(
