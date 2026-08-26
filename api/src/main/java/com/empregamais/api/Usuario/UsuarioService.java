@@ -1,4 +1,4 @@
-package com.empregamais.api.Candidato;
+package com.empregamais.api.Usuario;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,23 +9,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-public class CandidatoService {
+public class UsuarioService {
 
     @Autowired
-    private CandidatoRepository repository;
-    
-    public Candidato criarCandidato(Candidato candidato) {
-        if (repository.existsByEmail(candidato.getEmail())) {
+    private UsuarioRepository repository;
+
+    public Usuario criarUsuario(Usuario usuario) {
+        if (repository.existsByEmail(usuario.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "E-mail já cadastrado");
         }
-        return repository.save(candidato);
+        return repository.save(usuario);
     }
 
-    public Candidato atualizarCandidato(Candidato candidato) {
-        return repository.save(candidato);
+    public Usuario atualizarUsuario(Usuario usuario) {
+        return repository.save(usuario);
     }
 
-    public boolean deletarCandidato(Long id) {
+    public boolean deletarUsuario(Long id) {
         if (repository.existsById(id)) {
             repository.deleteById(id);
             return true;
@@ -33,11 +33,11 @@ public class CandidatoService {
         return false;
     }
 
-    public Optional<Candidato> buscarCandidatoPorId(Long id) {
+    public Optional<Usuario> buscarUsuarioPorId(Long id) {
         return repository.findById(id);
     }
 
-    public List<Candidato> buscarCandidatos() {
+    public List<Usuario> buscarUsuarios() {
         return repository.findAll();
     }
 }

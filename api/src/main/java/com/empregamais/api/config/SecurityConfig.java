@@ -34,6 +34,11 @@ public class SecurityConfig {
                     "/candidato/**",
                     "/candidatos",
                     "/candidatos/**",
+
+                    "/usuario",
+                    "/usuario/**",
+                    "/usuarios",
+                    "/usuarios/**",
                     
                     "/swagger-ui.html",
                     "/swagger-ui/**",

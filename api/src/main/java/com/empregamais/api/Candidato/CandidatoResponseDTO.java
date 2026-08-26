@@ -2,8 +2,8 @@ package com.empregamais.api.Candidato;
 
 import java.time.OffsetDateTime;
 
-public record CandidatoDTO(
-    Integer id,
+public record CandidatoResponseDTO(
+    Long id,
     String nome,
     String telefone,
     String email,

@@ -1,9 +1,9 @@
-package com.empregamais.api.Candidato;
+package com.empregamais.api.Usuario;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface CandidatoRepository extends JpaRepository<Candidato, Long> {
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 	boolean existsByEmail(String email);
 }

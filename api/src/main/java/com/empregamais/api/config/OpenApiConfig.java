@@ -13,13 +13,13 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .addServersItem(
                         new Server()
-                                .url("http://localhost:8080")
-                                .description("Servidor local")
+                                .url("https://psychic-space-cod-4jj796xvj5fj544-8080.app.github.dev/")
+                                .description("Servidor do Codespace")
                 )
                 .addServersItem(
                         new Server()
-                                .url("https://psychic-space-cod-4jj796xvj5fj544-8080.app.github.dev/")
-                                .description("Servidor do Codespace")
+                                .url("http://localhost:8080")
+                                .description("Servidor local")
                 );
     }
 }
