@@ -7,8 +7,6 @@ public record UsuarioResponseDTO(
     String nome,
     String email,
     String senha,
-    String papel,
-    boolean ativo,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt
 ) {}

@@ -23,10 +23,6 @@ public class Usuario {
     private String email;
     @Column(name = "senha", nullable = false)
     private String senha;
-    @Column(name = "papel", nullable = false)
-    private String papel;
-    @Column(name = "ativo", nullable = false)
-    private boolean ativo;
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -46,12 +42,6 @@ public class Usuario {
 
     public String getSenha() { return senha; }
     public void setSenha(String senha) { this.senha = senha; }
-
-    public String getPapel() { return papel; }
-    public void setPapel(String papel) { this.papel = papel; }
-
-    public boolean getAtivo() { return ativo; }
-    public void setAtivo(boolean ativo) { this.ativo = ativo; }
     
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
@@ -61,13 +51,11 @@ public class Usuario {
 
     public Usuario() {}
 
-    public Usuario(Long id, String nome, String email, String senha, String papel, boolean ativo, OffsetDateTime createdAt) {
+    public Usuario(Long id, String nome, String email, String senha, OffsetDateTime createdAt) {
         this.id = id;
         this.nome = nome;
         this.email = email;
         this.senha = senha;
-        this.papel = papel;
-        this.ativo = ativo;
         this.createdAt = createdAt;
     }
 }

@@ -47,8 +47,6 @@ public class UsuarioController {
         novoUsuario.setNome(request.nome());
         novoUsuario.setEmail(request.email());
         novoUsuario.setSenha(request.senha());
-        novoUsuario.setPapel(request.papel());
-        novoUsuario.setAtivo(request.ativo());
 
         Usuario salvo = usuarioService.criarUsuario(novoUsuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(salvo));
@@ -68,8 +66,6 @@ public class UsuarioController {
         usuarioAtualizado.setNome(request.nome());
         usuarioAtualizado.setEmail(request.email());
         usuarioAtualizado.setSenha(request.senha());
-        usuarioAtualizado.setPapel(request.papel());
-        usuarioAtualizado.setAtivo(request.ativo());
         
         usuarioAtualizado.setUpdatedAt(OffsetDateTime.now());
 
@@ -90,9 +86,7 @@ public class UsuarioController {
         if (request.nome() != null)     { usuarioAtualizado.setNome(request.nome()); }
         if (request.email() != null)    { usuarioAtualizado.setEmail(request.email()); }
         if (request.senha() != null)    { usuarioAtualizado.setSenha(request.senha()); }
-        if (request.papel() != null)    { usuarioAtualizado.setPapel(request.papel()); }
-        if (request.ativo() != null)    { usuarioAtualizado.setAtivo(request.ativo()); }
-
+        
         usuarioAtualizado.setUpdatedAt(OffsetDateTime.now());
 
         Usuario salvo = usuarioService.atualizarUsuario(usuarioAtualizado);
@@ -114,8 +108,6 @@ public class UsuarioController {
             usuario.getNome(),
             usuario.getEmail(),
             usuario.getSenha(),
-            usuario.getPapel(),
-            usuario.getAtivo(),
             usuario.getCreatedAt(),
             usuario.getUpdatedAt()
         );
