@@ -41,16 +41,18 @@ public class UsuarioController {
                         .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/usuario")
-    public ResponseEntity<UsuarioResponseDTO> criarUsuario(@RequestBody UsuarioRequestDTO request) {
-        Usuario novoUsuario = new Usuario();
-        novoUsuario.setNome(request.nome());
-        novoUsuario.setEmail(request.email());
-        novoUsuario.setSenha(request.senha());
+    @PostMapping("/usuario/login")
+    public ResponseEntity<?> login(@RequestBody UsuarioLoginRequestDTO request) {
 
-        Usuario salvo = usuarioService.criarUsuario(novoUsuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(salvo));
+        Optional<Usuario> usuario = usuarioService.buscarPorEmail(request.email());
+
+        if (!usuario.isPresent() || !usuarioService.verificarLogin(request.email(), request.senha())) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.ok().build();
     }
+
 
     @PutMapping("/usuario/{id}")
     public ResponseEntity<UsuarioResponseDTO> atualizarUsuarioCompleto(@PathVariable Long id,

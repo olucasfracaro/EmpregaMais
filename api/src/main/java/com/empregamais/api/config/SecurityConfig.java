@@ -25,8 +25,11 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers(
                     "/",
+                    "/ico.png",
                     "/index.html",
+                    "/login.html",
                     "/cadastroCandidato.js",
+                    "/loginUsuario.js",
                     "/style.css",
                     "/config.local.js",
 
@@ -39,6 +42,7 @@ public class SecurityConfig {
                     "/usuario/**",
                     "/usuarios",
                     "/usuarios/**",
+                    "/login",
                     
                     "/swagger-ui.html",
                     "/swagger-ui/**",
