@@ -95,15 +95,6 @@ public class UsuarioController {
         return ResponseEntity.ok(toDTO(salvo));
     }
 
-    @DeleteMapping("/usuario/{id}")
-    public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
-        boolean deletado = usuarioService.deletarUsuario(id);
-        if (deletado) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
-
     private UsuarioResponseDTO toDTO(Usuario usuario) {
         return new UsuarioResponseDTO(
             usuario.getId(),

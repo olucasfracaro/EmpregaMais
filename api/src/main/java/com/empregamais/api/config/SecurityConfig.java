@@ -28,6 +28,7 @@ public class SecurityConfig {
                     "/ico.png",
                     "/index.html",
                     "/login.html",
+                    "/principal.html",
                     "/cadastroCandidato.js",
                     "/loginUsuario.js",
                     "/style.css",

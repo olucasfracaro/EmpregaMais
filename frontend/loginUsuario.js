@@ -1,3 +1,7 @@
+function redirecionar() {
+    window.location.href = "/principal.html";
+}
+
 async function enviarLoginComFallback(payload) {
     const urls = [
         "https://psychic-space-cod-4jj796xvj5fj544-8080.app.github.dev/usuario/login",
@@ -28,6 +32,13 @@ async function enviarLoginComFallback(payload) {
     throw lastError || new Error("Falha ao enviar login");
 }
 
+const usuario = localStorage.getItem("usuarioLogado");
+if (usuario) {
+    redirecionar();
+}
+
+document.getElementById("btEntrar").addEventListener("click", redirecionar());
+
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("PainelNookie");
     if (!form) return;
@@ -51,8 +62,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error("Erro ao fazer login: " + response.status);
             }
 
-            alert("Login realizado com sucesso!");
             this.reset();
+            localStorage.setItem("usuarioLogado", Email);
         } catch (error) {
             console.error(error);
             alert(error.message || "Erro no login");

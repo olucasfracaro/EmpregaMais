@@ -26,14 +26,6 @@ public class UsuarioService {
         return repository.save(usuario);
     }
 
-    public boolean deletarUsuario(Long id) {
-        if (repository.existsById(id)) {
-            repository.deleteById(id);
-            return true;
-        }
-        return false;
-    }
-
     public Optional<Usuario> buscarUsuarioPorId(Long id) {
         return repository.findById(id);
     }
@@ -51,7 +43,7 @@ public class UsuarioService {
         Optional<Usuario> usuario = this.buscarPorEmail(email);
         if (usuario.isPresent()) {
             try {
-                MessageDigest md = MessageDigest.getInstance("SHA-512");
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
                 byte[] hashedSenha = md.digest(senha.getBytes());
                 StringBuilder sb = new StringBuilder();
                 for (byte b : hashedSenha) {
