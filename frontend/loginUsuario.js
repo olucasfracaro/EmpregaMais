@@ -37,8 +37,6 @@ if (usuario) {
     redirecionar();
 }
 
-document.getElementById("btEntrar").addEventListener("click", redirecionar());
-
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("PainelNookie");
     if (!form) return;
@@ -64,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             this.reset();
             localStorage.setItem("usuarioLogado", Email);
+            redirecionar();
         } catch (error) {
             console.error(error);
             alert(error.message || "Erro no login");

@@ -5,15 +5,17 @@ const mockData = [
 ];
 let candidatos = [];
 const curriculoBaseUrl = 'https://kampbrxrosxtspcmgewr.supabase.co/storage/v1/object/public/curriculos/';
+const candidatosCacheKey = 'candidatosCache';
+const candidatosCacheTtl = 5 * 60 * 1000;
 
 const tableBody = document.getElementById('tableBody');
 const searchInput = document.getElementById('searchInput');
 const emptyState = document.getElementById('emptyState');
 
-/*const usuario = localStorage.getItem("usuarioLogado");
+const usuario = localStorage.getItem("usuarioLogado");
 if (!usuario) {
     window.location.href = "login.html";
-}*/
+}
 
 async function receberDadosComFallback() {
     const urls = [
@@ -48,6 +50,30 @@ async function receberDadosComFallback() {
     }
 
     throw lastError || new Error("Falha ao receber dados");
+}
+
+function receberCandidatosDoCache() {
+    try {
+        const cache = JSON.parse(localStorage.getItem(candidatosCacheKey));
+        if (!cache || !Array.isArray(cache.dados)) return null;
+
+        const cacheExpirado = Date.now() - cache.timestamp >= candidatosCacheTtl;
+        return cacheExpirado ? null : cache.dados;
+    } catch (error) {
+        localStorage.removeItem(candidatosCacheKey);
+        return null;
+    }
+}
+
+function salvarCandidatosNoCache(dados) {
+    try {
+        localStorage.setItem(candidatosCacheKey, JSON.stringify({
+            timestamp: Date.now(),
+            dados
+        }));
+    } catch (error) {
+        console.warn('Não foi possível salvar os candidatos em cache:', error);
+    }
 }
 
 function getStatusClass(status) {
@@ -178,8 +204,16 @@ searchInput.addEventListener('input', (e) => {
 });
 
 window.onload = async () => {
+    const candidatosEmCache = receberCandidatosDoCache();
+    if (candidatosEmCache) {
+        candidatos = candidatosEmCache;
+        renderTable(candidatos);
+        return;
+    }
+
     try {
         candidatos = await receberDadosComFallback();
+        salvarCandidatosNoCache(candidatos);
     } catch (error) {
         console.error('Não foi possível receber os candidatos:', error);
         // Fallback para os dados mockados
