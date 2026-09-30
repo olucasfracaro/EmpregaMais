@@ -23,15 +23,22 @@
                 <p>Gerencie contatos, currículos e status de atendimento em tempo real.</p>
             </div>
 
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input
-                    type="text"
-                    id="searchInput"
-                    class="search-input"
-                    placeholder="Buscar por Nome ou ID..."
-                    autocomplete="off"
-                >
+            <div class="header-controls">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input
+                        type="text"
+                        id="searchInput"
+                        class="search-input"
+                        placeholder="Buscar por Nome ou ID..."
+                        autocomplete="off"
+                    >
+                </div>
+
+                <button type="button" id="refreshCandidates" class="btn-refresh-candidates">
+                    <i class="fa-solid fa-rotate"></i>
+                    Atualizar
+                </button>
             </div>
         </header>
 
@@ -40,8 +47,12 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>NOME</th>
+                            <th id="sortById" class="sortable-header" tabindex="0" role="button">
+                                ID <i id="sortByIdIcon" class="sort-indicator fa-solid fa-arrow-down" aria-hidden="true"></i>
+                            </th>
+                            <th id="sortByName" class="sortable-header" tabindex="0" role="button">
+                                NOME <i id="sortByNameIcon" class="sort-indicator fa-solid fa-sort" aria-hidden="true"></i>
+                            </th>
                             <th>TELEFONE</th>
                             <th>EMAIL</th>
                             <th class="text-center">MENSAGEM</th>

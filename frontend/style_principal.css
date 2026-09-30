@@ -77,9 +77,23 @@ body {
     width: 100%;
 }
 
+.header-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+}
+
 @media (min-width: 768px) {
     .search-box {
         width: 320px;
+    }
+
+    .header-controls {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+        width: auto;
     }
 }
 
@@ -147,6 +161,21 @@ body {
     letter-spacing: 0.05em;
 }
 
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.sortable-header:hover,
+.sortable-header:focus {
+    color: var(--primary-color);
+}
+
+.sort-indicator {
+    margin-left: 0.25rem;
+    font-size: 0.7rem;
+}
+
 .data-table td {
     padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--border-color);
@@ -171,9 +200,35 @@ body {
 
 .table-actions {
     display: flex;
+    gap: 0.75rem;
     justify-content: flex-end;
+    flex-wrap: wrap;
     padding: 1rem 1.25rem;
     border-top: 1px solid var(--border-color);
+}
+
+.btn-refresh-candidates {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-refresh-candidates:hover:not(:disabled) {
+    background-color: var(--row-hover);
+}
+
+.btn-refresh-candidates:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .btn-confirm-changes {

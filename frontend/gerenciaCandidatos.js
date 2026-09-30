@@ -13,6 +13,14 @@ const tableBody = document.getElementById('tableBody');
 const searchInput = document.getElementById('searchInput');
 const emptyState = document.getElementById('emptyState');
 const confirmChangesButton = document.getElementById('confirmChanges');
+const refreshCandidatesButton = document.getElementById('refreshCandidates');
+const sortByIdHeader = document.getElementById('sortById');
+const sortByNameHeader = document.getElementById('sortByName');
+const sortByIdIcon = document.getElementById('sortByIdIcon');
+const sortByNameIcon = document.getElementById('sortByNameIcon');
+const refreshInterval = 10 * 60 * 1000;
+let campoOrdenacao = 'id';
+let direcaoOrdenacao = 'asc';
 
 const usuario = localStorage.getItem("usuarioLogado");
 if (!usuario) {
@@ -169,6 +177,38 @@ async function confirmarAlteracoes() {
     }
 }
 
+async function atualizarCandidatos() {
+    refreshCandidatesButton.disabled = true;
+    refreshCandidatesButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Atualizando...';
+
+    try {
+        const dadosAtualizados = await receberDadosComFallback();
+
+        for (const candidato of dadosAtualizados) {
+            const alteracao = alteracoesPendentes.get(candidato.id);
+            if (alteracao) {
+                candidato.status = alteracao.status;
+            }
+        }
+
+        candidatos = dadosAtualizados;
+        if (alteracoesPendentes.size === 0) {
+            salvarCandidatosNoCache(candidatos);
+        }
+        renderTable(candidatos);
+    } catch (error) {
+        console.error('Não foi possível atualizar os candidatos:', error);
+        if (candidatos.length === 0) {
+            candidatos = receberCandidatosDoCache() || mockData;
+            renderTable(candidatos);
+        }
+        window.alert('Não foi possível atualizar os candidatos.');
+    } finally {
+        refreshCandidatesButton.disabled = false;
+        refreshCandidatesButton.innerHTML = '<i class="fa-solid fa-rotate"></i> Atualizar';
+    }
+}
+
 function showMessage(message) {
     window.alert(message);
 }
@@ -209,6 +249,54 @@ async function downloadCurriculum(curriculoPath, nome, id) {
     }
 }
 
+function ordenarCandidatos(data) {
+    const candidatosOrdenados = [...data];
+
+    candidatosOrdenados.sort((primeiro, segundo) => {
+        if (campoOrdenacao === 'name') {
+            const resultado = String(primeiro.nome || '').localeCompare(
+                String(segundo.nome || ''),
+                'pt-BR',
+                { sensitivity: 'base' }
+            );
+            return direcaoOrdenacao === 'desc' ? -resultado : resultado;
+        }
+
+        const resultado = Number(primeiro.id) - Number(segundo.id);
+        return direcaoOrdenacao === 'desc' ? -resultado : resultado;
+    });
+
+    return candidatosOrdenados;
+}
+
+function alternarOrdenacao(campo) {
+    if (campo === campoOrdenacao) {
+        direcaoOrdenacao = direcaoOrdenacao === 'asc' ? 'desc' : 'asc';
+    } else {
+        campoOrdenacao = campo;
+        direcaoOrdenacao = 'asc';
+    }
+
+    atualizarIndicadoresOrdenacao();
+    renderTable(candidatosFiltrados());
+}
+
+function atualizarIndicadoresOrdenacao() {
+    const classeSetaAtual = direcaoOrdenacao === 'asc' ? 'fa-arrow-down' : 'fa-arrow-up';
+
+    sortByIdIcon.className = `sort-indicator fa-solid ${campoOrdenacao === 'id' ? classeSetaAtual : 'fa-sort'}`;
+    sortByNameIcon.className = `sort-indicator fa-solid ${campoOrdenacao === 'name' ? classeSetaAtual : 'fa-sort'}`;
+}
+
+function candidatosFiltrados() {
+    const term = searchInput.value.toLowerCase().trim();
+    return candidatos.filter(item => {
+        const matchesName = item.nome.toLowerCase().includes(term);
+        const matchesId = item.id.toString().includes(term);
+        return matchesName || matchesId;
+    });
+}
+
 function renderTable(data) {
     tableBody.innerHTML = '';
 
@@ -219,7 +307,7 @@ function renderTable(data) {
 
     emptyState.style.display = 'none';
 
-    data.forEach(item => {
+    ordenarCandidatos(data).forEach(item => {
         const tr = document.createElement('tr');
 
         tr.innerHTML = `
@@ -263,35 +351,17 @@ function renderTable(data) {
 }
 
 searchInput.addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase().trim();
-
-    const filteredData = candidatos.filter(item => {
-        const matchesName = item.nome.toLowerCase().includes(term);
-        const matchesId = item.id.toString().includes(term);
-        return matchesName || matchesId;
-    });
-
-    renderTable(filteredData);
+    renderTable(candidatosFiltrados());
 });
 
+sortByIdHeader.addEventListener('click', () => alternarOrdenacao('id'));
+sortByNameHeader.addEventListener('click', () => alternarOrdenacao('name'));
+atualizarIndicadoresOrdenacao();
+
 confirmChangesButton.addEventListener('click', confirmarAlteracoes);
+refreshCandidatesButton.addEventListener('click', atualizarCandidatos);
 
 window.onload = async () => {
-    const candidatosEmCache = receberCandidatosDoCache();
-    if (candidatosEmCache) {
-        candidatos = candidatosEmCache;
-        renderTable(candidatos);
-        return;
-    }
-
-    try {
-        candidatos = await receberDadosComFallback();
-        salvarCandidatosNoCache(candidatos);
-    } catch (error) {
-        console.error('Não foi possível receber os candidatos:', error);
-        // Fallback para os dados mockados
-        candidatos = mockData;
-    }
-
-    renderTable(candidatos);
+    await atualizarCandidatos();
+    window.setInterval(atualizarCandidatos, refreshInterval);
 };
