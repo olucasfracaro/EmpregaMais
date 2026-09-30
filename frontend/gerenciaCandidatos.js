@@ -1,3 +1,7 @@
+const pdfjsLib = globalThis.pdfjsLib;
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
 const mockData = [
     { id: 1, nome: 'João Silva', telefone: '(11) 99999-9999', email: 'joao.silva@email.com', mensagem: 'Olá, estou interessado na vaga.', status: 'CONTRATADO' },
     { id: 2, nome: 'Maria Oliveira', telefone: '(21) 88888-8888', email: 'maria.oliveira@email.com', mensagem: 'Gostaria de mais informações sobre a oportunidade.', status: 'PENDENTE' },
@@ -18,9 +22,14 @@ const sortByIdHeader = document.getElementById('sortById');
 const sortByNameHeader = document.getElementById('sortByName');
 const sortByIdIcon = document.getElementById('sortByIdIcon');
 const sortByNameIcon = document.getElementById('sortByNameIcon');
+const curriculumModal = document.getElementById('curriculumModal');
+const curriculumModalTitle = document.getElementById('curriculumModalTitle');
+const curriculumPreview = document.getElementById('curriculumPreview');
+const closeCurriculumModalButton = document.getElementById('closeCurriculumModal');
 const refreshInterval = 10 * 60 * 1000;
 let campoOrdenacao = 'id';
 let direcaoOrdenacao = 'asc';
+let visualizacaoAtual = 0;
 
 const usuario = localStorage.getItem("usuarioLogado");
 if (!usuario) {
@@ -213,39 +222,143 @@ function showMessage(message) {
     window.alert(message);
 }
 
-async function downloadCurriculum(curriculoPath, nome, id) {
+function obterCurriculoUrl(curriculoPath) {
+    console.debug('[Currículo] Caminho bruto recebido:', JSON.stringify(curriculoPath));
+    let caminho = String(curriculoPath)
+        .replace(/[\r\n]/g, '')
+        .trim()
+        .replace(/^\/+/, '');
+    console.debug('[Currículo] Caminho normalizado:', JSON.stringify(caminho));
+    if (/^https?:\/\//i.test(caminho)) {
+        console.debug('[Currículo] URL absoluta usada:', caminho);
+        return caminho;
+    }
+
+    caminho = caminho.replace(/^public\/curriculos\//i, '').replace(/^curriculos\//i, '');
+    const caminhoCodificado = caminho.split('/').map(encodeURIComponent).join('/');
+    const url = `${curriculoBaseUrl}${caminhoCodificado}`;
+    console.debug('[Currículo] URL pública gerada:', url);
+    return url;
+}
+
+function fecharCurriculo() {
+    visualizacaoAtual += 1;
+    curriculumModal.hidden = true;
+    curriculumPreview.replaceChildren();
+    document.body.classList.remove('modal-open');
+}
+
+async function visualizarCurriculum(curriculoPath, nome, id) {
+    console.groupCollapsed(`[Currículo] Início da visualização - candidato ${id}`);
+    console.debug('[Currículo] Nome:', nome);
+    console.debug('[Currículo] ID:', id);
+    console.debug('[Currículo] Valor recebido:', JSON.stringify(curriculoPath));
+
     if (!curriculoPath) {
+        console.error('[Currículo] Caminho vazio ou inexistente.');
+        console.groupEnd();
         window.alert('Este candidato não possui currículo disponível.');
         return;
     }
 
+    const curriculoUrl = obterCurriculoUrl(curriculoPath);
+    let etapa = 'preparando a requisição';
+    const visualizacaoId = ++visualizacaoAtual;
+    curriculumModal.hidden = true;
+    curriculumPreview.replaceChildren();
+    curriculumModalTitle.textContent = `Currículo de ${nome || `candidato ${id}`}`;
+    curriculumPreview.innerHTML = '<p class="curriculum-viewer-status">Carregando currículo...</p>';
+    curriculumModal.hidden = false;
+    document.body.classList.add('modal-open');
+
     try {
-        const caminho = String(curriculoPath).replace(/^\/+/, '');
-        const curriculoUrl = /^https?:\/\//i.test(caminho)
-            ? caminho
-            : `${curriculoBaseUrl}${caminho}`;
-        const response = await fetch(curriculoUrl);
+        console.info('[Currículo] Fazendo fetch:', curriculoUrl);
+        const response = await fetch(curriculoUrl, { cache: 'no-store' });
+        console.info('[Currículo] Resposta HTTP:', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            contentType: response.headers.get('content-type'),
+            contentLength: response.headers.get('content-length'),
+            urlFinal: response.url
+        });
         if (!response.ok) {
-            throw new Error(`Erro ao baixar o currículo: ${response.status}`);
+            throw new Error(`Erro ao carregar o currículo: ${response.status}`);
         }
 
-        const arquivo = await response.blob();
-        const urlTemporaria = URL.createObjectURL(arquivo);
-        const link = document.createElement('a');
-        const nomeArquivo = String(nome || `candidato-${id}`)
-            .replace(/[^a-z0-9]/gi, '-')
-            .replace(/-+/g, '-')
-            .toLowerCase();
+        etapa = 'lendo o arquivo recebido';
+        const arquivo = await response.arrayBuffer();
+        console.info('[Currículo] Arquivo recebido:', {
+            bytes: arquivo.byteLength,
+            assinaturaPdf: new TextDecoder().decode(arquivo.slice(0, 5))
+        });
 
-        link.href = urlTemporaria;
-        link.download = `curriculo-${nomeArquivo}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(urlTemporaria);
+        etapa = 'interpretando o PDF';
+        const pdf = await pdfjsLib.getDocument({
+            data: arquivo,
+            disableWorker: true
+        }).promise;
+        console.info('[Currículo] PDF interpretado:', {
+            paginas: pdf.numPages,
+            visualizacaoId
+        });
+        if (visualizacaoId !== visualizacaoAtual) return;
+
+        curriculumPreview.replaceChildren();
+        for (let numeroPagina = 1; numeroPagina <= pdf.numPages; numeroPagina += 1) {
+            etapa = `carregando a página ${numeroPagina}`;
+            const pagina = await pdf.getPage(numeroPagina);
+            if (visualizacaoId !== visualizacaoAtual) return;
+
+            const viewport = pagina.getViewport({ scale: 1.35 });
+            console.debug('[Currículo] Renderizando página:', {
+                pagina: numeroPagina,
+                largura: viewport.width,
+                altura: viewport.height
+            });
+            const pageContainer = document.createElement('div');
+            pageContainer.className = 'curriculum-page-container';
+            pageContainer.style.width = `${viewport.width}px`;
+            pageContainer.style.height = `${viewport.height}px`;
+
+            const canvas = document.createElement('canvas');
+            canvas.className = 'curriculum-page';
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            pageContainer.appendChild(canvas);
+
+            const textLayer = document.createElement('div');
+            textLayer.className = 'curriculum-text-layer';
+            pageContainer.appendChild(textLayer);
+            curriculumPreview.appendChild(pageContainer);
+
+            await pagina.render({
+                canvasContext: canvas.getContext('2d'),
+                viewport
+            }).promise;
+
+            const textContent = await pagina.getTextContent();
+            await pdfjsLib.renderTextLayer({
+                textContent,
+                container: textLayer,
+                viewport,
+                textDivs: []
+            }).promise;
+        }
+        console.info('[Currículo] Visualização concluída com sucesso.');
     } catch (error) {
-        console.error('Não foi possível baixar o currículo:', error);
-        window.alert('Não foi possível baixar o currículo.');
+        if (visualizacaoId !== visualizacaoAtual) return;
+        console.error('[Currículo] Falha detalhada:', {
+            etapa,
+            url: curriculoUrl,
+            nomeErro: error?.name,
+            mensagem: error?.message,
+            stack: error?.stack,
+            erro: error
+        });
+        curriculumPreview.innerHTML = `<p class="curriculum-viewer-status">Não foi possível carregar este currículo.<br><small>Etapa: ${etapa}<br>${error?.message || 'Erro desconhecido'}</small></p>`;
+    } finally {
+        console.groupEnd();
     }
 }
 
@@ -341,9 +454,11 @@ function renderTable(data) {
         messageButton.addEventListener('click', () => showMessage(item.mensagem));
 
         const curriculumButton = tr.querySelector('.btn-cur');
-        curriculumButton.addEventListener('click', () => {
-            downloadCurriculum(item.curriculoPath, item.nome, item.id);
-        });
+        curriculumButton.addEventListener('click', () => visualizarCurriculum(
+            item.curriculoPath ?? item.curriculo_path,
+            item.nome,
+            item.id
+        ));
 
         const statusSelect = tr.querySelector('.status-select');
         statusSelect.addEventListener('change', () => updateStatusStyle(statusSelect, item.id));
@@ -360,6 +475,17 @@ atualizarIndicadoresOrdenacao();
 
 confirmChangesButton.addEventListener('click', confirmarAlteracoes);
 refreshCandidatesButton.addEventListener('click', atualizarCandidatos);
+closeCurriculumModalButton.addEventListener('click', fecharCurriculo);
+curriculumModal.addEventListener('click', event => {
+    if (event.target === curriculumModal) {
+        fecharCurriculo();
+    }
+});
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !curriculumModal.hidden) {
+        fecharCurriculo();
+    }
+});
 
 window.onload = async () => {
     await atualizarCandidatos();

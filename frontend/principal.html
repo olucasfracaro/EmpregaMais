@@ -79,6 +79,22 @@
             </div>
         </main>
     </div>
+
+    <div id="curriculumModal" class="curriculum-modal" hidden>
+        <div class="curriculum-modal-panel" role="dialog" aria-modal="true" aria-labelledby="curriculumModalTitle">
+            <div class="curriculum-modal-header">
+                <h2 id="curriculumModalTitle">Currículo</h2>
+                <button type="button" id="closeCurriculumModal" class="modal-close-button" title="Fechar visualização" aria-label="Fechar visualização">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="curriculumPreview" class="curriculum-preview" aria-live="polite">
+                <p class="curriculum-viewer-status">Carregando currículo...</p>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script type="module" src="gerenciaCandidatos.js"></script>
 </body>
 </html>
