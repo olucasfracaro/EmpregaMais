@@ -169,6 +169,37 @@ body {
     text-align: center;
 }
 
+.table-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-confirm-changes {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    background-color: var(--primary-color);
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-confirm-changes:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+}
+
+.btn-confirm-changes:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 
 .btn-action {
     display: inline-flex;

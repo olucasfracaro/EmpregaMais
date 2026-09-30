@@ -4,6 +4,7 @@ const mockData = [
     { id: 3, nome: 'Pedro Santos', telefone: '(31) 77777-7777', email: 'pedro.santos@email.com', mensagem: 'Estou disponível para uma entrevista.', status: 'NÃO' }
 ];
 let candidatos = [];
+const alteracoesPendentes = new Map();
 const curriculoBaseUrl = 'https://kampbrxrosxtspcmgewr.supabase.co/storage/v1/object/public/curriculos/';
 const candidatosCacheKey = 'candidatosCache';
 const candidatosCacheTtl = 5 * 60 * 1000;
@@ -11,6 +12,7 @@ const candidatosCacheTtl = 5 * 60 * 1000;
 const tableBody = document.getElementById('tableBody');
 const searchInput = document.getElementById('searchInput');
 const emptyState = document.getElementById('emptyState');
+const confirmChangesButton = document.getElementById('confirmChanges');
 
 const usuario = localStorage.getItem("usuarioLogado");
 if (!usuario) {
@@ -94,7 +96,76 @@ function updateStatusStyle(selectElement, id) {
 
     const item = candidatos.find(d => d.id === id);
     if (item) {
+        const alteracaoAtual = alteracoesPendentes.get(id);
+        const statusOriginal = alteracaoAtual?.statusOriginal ?? item.status;
         item.status = newStatus;
+
+        if (newStatus === statusOriginal) {
+            alteracoesPendentes.delete(id);
+        } else {
+            alteracoesPendentes.set(id, { status: newStatus, statusOriginal });
+        }
+    }
+}
+
+async function atualizarStatusComFallback(id, status) {
+    const urls = [
+        `/candidato/${id}`,
+        `https://psychic-space-cod-4jj796xvj5fj544-8080.app.github.dev/candidato/${id}`,
+        `http://localhost:8080/candidato/${id}`
+    ];
+
+    let lastError;
+
+    for (const url of urls) {
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+
+            if (!response.ok) {
+                lastError = new Error(`Erro ao atualizar candidato ${id}: ${response.status}`);
+                continue;
+            }
+
+            return response.json();
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    throw lastError || new Error(`Falha ao atualizar candidato ${id}`);
+}
+
+async function confirmarAlteracoes() {
+    if (alteracoesPendentes.size === 0) {
+        window.alert('Nenhuma alteração pendente para salvar.');
+        return;
+    }
+
+    confirmChangesButton.disabled = true;
+    confirmChangesButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+
+    try {
+        for (const [id, alteracao] of alteracoesPendentes) {
+            const candidatoAtualizado = await atualizarStatusComFallback(id, alteracao.status);
+            const item = candidatos.find(candidato => candidato.id === id);
+            if (item && candidatoAtualizado.status) {
+                item.status = candidatoAtualizado.status;
+            }
+            alteracoesPendentes.delete(id);
+            salvarCandidatosNoCache(candidatos);
+        }
+
+        window.alert('Alterações salvas com sucesso.');
+    } catch (error) {
+        console.error('Não foi possível salvar as alterações:', error);
+        window.alert('Não foi possível salvar todas as alterações. Tente novamente.');
+    } finally {
+        confirmChangesButton.disabled = false;
+        confirmChangesButton.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar alterações';
     }
 }
 
@@ -202,6 +273,8 @@ searchInput.addEventListener('input', (e) => {
 
     renderTable(filteredData);
 });
+
+confirmChangesButton.addEventListener('click', confirmarAlteracoes);
 
 window.onload = async () => {
     const candidatosEmCache = receberCandidatosDoCache();

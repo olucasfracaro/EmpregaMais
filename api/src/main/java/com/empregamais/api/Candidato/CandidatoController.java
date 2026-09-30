@@ -93,6 +93,7 @@ public class CandidatoController {
         if (request.telefone() != null) { candidatoAtualizado.setTelefone(request.telefone()); }
         if (request.mensagem() != null) { candidatoAtualizado.setMensagem(request.mensagem()); }
         if (request.curriculoPath() != null) { candidatoAtualizado.setCurriculoPath(request.curriculoPath()); }
+        if (request.status() != null) { candidatoAtualizado.setStatus(request.status()); }
 
         candidatoAtualizado.setUpdatedAt(OffsetDateTime.now());
 

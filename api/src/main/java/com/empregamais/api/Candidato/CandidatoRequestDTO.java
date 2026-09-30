@@ -8,5 +8,6 @@ public record CandidatoRequestDTO(
     String email,
     String mensagem,
     @JsonProperty("curriculo_path")
-    String curriculoPath
+    String curriculoPath,
+    String status
 ) {}
