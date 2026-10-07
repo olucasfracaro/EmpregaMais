@@ -1,13 +1,13 @@
 package com.empregamais.api.Analise;
 
 import java.time.OffsetDateTime;
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Map;
 
 public record AnaliseResponseDTO(
     Long id,
     Long candidatoId,
     String status,
-    JsonNode resultado,
+    Map<String, Object> resultado,
     String modelo,
     String erro,
     OffsetDateTime createdAt,

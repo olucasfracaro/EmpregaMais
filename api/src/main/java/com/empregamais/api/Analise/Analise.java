@@ -7,7 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.OffsetDateTime;
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Map;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -26,7 +26,7 @@ public class Analise {
     private String status;
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "resultado", nullable = false, columnDefinition = "jsonb")
-    private JsonNode resultado;
+    private Map<String, Object> resultado;
     @Column(name = "modelo", nullable = false)
     private String modelo;
     @Column(name = "erro", nullable = true)
@@ -48,8 +48,8 @@ public class Analise {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
-    public JsonNode getResultado() { return resultado; }
-    public void setResultado(JsonNode resultado) { this.resultado = resultado; }
+    public Map<String, Object> getResultado() { return resultado; }
+    public void setResultado(Map<String, Object> resultado) { this.resultado = resultado; }
 
     public String getModelo() { return modelo; }
     public void setModelo(String modelo) { this.modelo = modelo; }
@@ -65,7 +65,7 @@ public class Analise {
 
     public Analise() {}
 
-    public Analise(Long id, Long candidatoId, String status, JsonNode resultado, String modelo, String erro, OffsetDateTime createdAt, OffsetDateTime finishedAt) {
+    public Analise(Long id, Long candidatoId, String status, Map<String, Object> resultado, String modelo, String erro, OffsetDateTime createdAt, OffsetDateTime finishedAt) {
         this.id = id;
         this.candidatoId = candidatoId;
         this.status = status;

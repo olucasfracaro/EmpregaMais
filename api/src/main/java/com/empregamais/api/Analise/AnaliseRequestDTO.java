@@ -1,11 +1,11 @@
 package com.empregamais.api.Analise;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Map;
 
 public record AnaliseRequestDTO(
     Long candidatoId,
     String status,
-    JsonNode resultado,
+    Map<String, Object> resultado,
     String modelo,
     String erro
 ) {}
