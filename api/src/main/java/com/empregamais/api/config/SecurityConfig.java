@@ -46,6 +46,12 @@ public class SecurityConfig {
                     "/usuario/**",
                     "/usuarios",
                     "/usuarios/**",
+
+                    "/analise",
+                    "/analise/**",
+                    "/analises",
+                    "/analises/**",
+
                     "/login",
                     "/principal"
                 ).permitAll()
