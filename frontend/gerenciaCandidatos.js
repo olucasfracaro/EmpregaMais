@@ -95,40 +95,10 @@ function salvarCandidatosNoCache(dados) {
     }
 }
 
-function getStatusClass(status) {
-    switch (status) {
-        case 'CONTRATADO': return 'status-contratado';
-        case 'PENDENTE': return 'status-pendente';
-        case 'NÃO': return 'status-nao';
-        default: return '';
-    }
-}
-
-function updateStatusStyle(selectElement, id) {
-    const newStatus = selectElement.value;
-    
-    selectElement.classList.remove('status-contratado', 'status-pendente', 'status-nao');
-    
-    selectElement.classList.add(getStatusClass(newStatus));
-
-    const item = candidatos.find(d => d.id === id);
-    if (item) {
-        const alteracaoAtual = alteracoesPendentes.get(id);
-        const statusOriginal = alteracaoAtual?.statusOriginal ?? item.status;
-        item.status = newStatus;
-
-        if (newStatus === statusOriginal) {
-            alteracoesPendentes.delete(id);
-        } else {
-            alteracoesPendentes.set(id, { status: newStatus, statusOriginal });
-        }
-    }
-}
-
 async function atualizarStatusComFallback(id, status) {
     const urls = [
         `/candidato/${id}`,
-        `https://psychic-space-cod-4jj796xvj5fj544-8080.app.github.dev/candidato/${id}`,
+        `https://fantastic-space-pancake-4j66jpw9gjp63qpjg-8080.app.github.dev/candidato/${id}`,
         `http://localhost:8080/candidato/${id}`
     ];
 
@@ -186,42 +156,6 @@ async function confirmarAlteracoes() {
     }
 }
 
-async function atualizarCandidatos() {
-    refreshCandidatesButton.disabled = true;
-    refreshCandidatesButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Atualizando...';
-
-    try {
-        const dadosAtualizados = await receberDadosComFallback();
-
-        for (const candidato of dadosAtualizados) {
-            const alteracao = alteracoesPendentes.get(candidato.id);
-            if (alteracao) {
-                candidato.status = alteracao.status;
-            }
-        }
-
-        candidatos = dadosAtualizados;
-        if (alteracoesPendentes.size === 0) {
-            salvarCandidatosNoCache(candidatos);
-        }
-        renderTable(candidatos);
-    } catch (error) {
-        console.error('Não foi possível atualizar os candidatos:', error);
-        if (candidatos.length === 0) {
-            candidatos = receberCandidatosDoCache() || mockData;
-            renderTable(candidatos);
-        }
-        window.alert('Não foi possível atualizar os candidatos.');
-    } finally {
-        refreshCandidatesButton.disabled = false;
-        refreshCandidatesButton.innerHTML = '<i class="fa-solid fa-rotate"></i> Atualizar';
-    }
-}
-
-function showMessage(message) {
-    window.alert(message);
-}
-
 function obterCurriculoUrl(curriculoPath) {
     console.debug('[Currículo] Caminho bruto recebido:', JSON.stringify(curriculoPath));
     let caminho = String(curriculoPath)
@@ -246,120 +180,6 @@ function fecharCurriculo() {
     curriculumModal.hidden = true;
     curriculumPreview.replaceChildren();
     document.body.classList.remove('modal-open');
-}
-
-async function visualizarCurriculum(curriculoPath, nome, id) {
-    console.groupCollapsed(`[Currículo] Início da visualização - candidato ${id}`);
-    console.debug('[Currículo] Nome:', nome);
-    console.debug('[Currículo] ID:', id);
-    console.debug('[Currículo] Valor recebido:', JSON.stringify(curriculoPath));
-
-    if (!curriculoPath) {
-        console.error('[Currículo] Caminho vazio ou inexistente.');
-        console.groupEnd();
-        window.alert('Este candidato não possui currículo disponível.');
-        return;
-    }
-
-    const curriculoUrl = obterCurriculoUrl(curriculoPath);
-    let etapa = 'preparando a requisição';
-    const visualizacaoId = ++visualizacaoAtual;
-    curriculumModal.hidden = true;
-    curriculumPreview.replaceChildren();
-    curriculumModalTitle.textContent = `Currículo de ${nome || `candidato ${id}`}`;
-    curriculumPreview.innerHTML = '<p class="curriculum-viewer-status">Carregando currículo...</p>';
-    curriculumModal.hidden = false;
-    document.body.classList.add('modal-open');
-
-    try {
-        console.info('[Currículo] Fazendo fetch:', curriculoUrl);
-        const response = await fetch(curriculoUrl, { cache: 'no-store' });
-        console.info('[Currículo] Resposta HTTP:', {
-            status: response.status,
-            statusText: response.statusText,
-            ok: response.ok,
-            contentType: response.headers.get('content-type'),
-            contentLength: response.headers.get('content-length'),
-            urlFinal: response.url
-        });
-        if (!response.ok) {
-            throw new Error(`Erro ao carregar o currículo: ${response.status}`);
-        }
-
-        etapa = 'lendo o arquivo recebido';
-        const arquivo = await response.arrayBuffer();
-        console.info('[Currículo] Arquivo recebido:', {
-            bytes: arquivo.byteLength,
-            assinaturaPdf: new TextDecoder().decode(arquivo.slice(0, 5))
-        });
-
-        etapa = 'interpretando o PDF';
-        const pdf = await pdfjsLib.getDocument({
-            data: arquivo,
-            disableWorker: true
-        }).promise;
-        console.info('[Currículo] PDF interpretado:', {
-            paginas: pdf.numPages,
-            visualizacaoId
-        });
-        if (visualizacaoId !== visualizacaoAtual) return;
-
-        curriculumPreview.replaceChildren();
-        for (let numeroPagina = 1; numeroPagina <= pdf.numPages; numeroPagina += 1) {
-            etapa = `carregando a página ${numeroPagina}`;
-            const pagina = await pdf.getPage(numeroPagina);
-            if (visualizacaoId !== visualizacaoAtual) return;
-
-            const viewport = pagina.getViewport({ scale: 1.35 });
-            console.debug('[Currículo] Renderizando página:', {
-                pagina: numeroPagina,
-                largura: viewport.width,
-                altura: viewport.height
-            });
-            const pageContainer = document.createElement('div');
-            pageContainer.className = 'curriculum-page-container';
-            pageContainer.style.width = `${viewport.width}px`;
-            pageContainer.style.height = `${viewport.height}px`;
-
-            const canvas = document.createElement('canvas');
-            canvas.className = 'curriculum-page';
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            pageContainer.appendChild(canvas);
-
-            const textLayer = document.createElement('div');
-            textLayer.className = 'curriculum-text-layer';
-            pageContainer.appendChild(textLayer);
-            curriculumPreview.appendChild(pageContainer);
-
-            await pagina.render({
-                canvasContext: canvas.getContext('2d'),
-                viewport
-            }).promise;
-
-            const textContent = await pagina.getTextContent();
-            await pdfjsLib.renderTextLayer({
-                textContent,
-                container: textLayer,
-                viewport,
-                textDivs: []
-            }).promise;
-        }
-        console.info('[Currículo] Visualização concluída com sucesso.');
-    } catch (error) {
-        if (visualizacaoId !== visualizacaoAtual) return;
-        console.error('[Currículo] Falha detalhada:', {
-            etapa,
-            url: curriculoUrl,
-            nomeErro: error?.name,
-            mensagem: error?.message,
-            stack: error?.stack,
-            erro: error
-        });
-        curriculumPreview.innerHTML = `<p class="curriculum-viewer-status">Não foi possível carregar este currículo.<br><small>Etapa: ${etapa}<br>${error?.message || 'Erro desconhecido'}</small></p>`;
-    } finally {
-        console.groupEnd();
-    }
 }
 
 function ordenarCandidatos(data) {
@@ -391,7 +211,6 @@ function alternarOrdenacao(campo) {
     }
 
     atualizarIndicadoresOrdenacao();
-    renderTable(candidatosFiltrados());
 }
 
 function atualizarIndicadoresOrdenacao() {
@@ -401,13 +220,64 @@ function atualizarIndicadoresOrdenacao() {
     sortByNameIcon.className = `sort-indicator fa-solid ${campoOrdenacao === 'name' ? classeSetaAtual : 'fa-sort'}`;
 }
 
-function candidatosFiltrados() {
-    const term = searchInput.value.toLowerCase().trim();
-    return candidatos.filter(item => {
-        const matchesName = item.nome.toLowerCase().includes(term);
-        const matchesId = item.id.toString().includes(term);
-        return matchesName || matchesId;
-    });
+let activeCandidateId = null;
+
+// Stats elements
+const statTotalVal = document.getElementById('statTotalVal');
+const statConVal = document.getElementById('statConVal');
+const statPenVal = document.getElementById('statPenVal');
+const statNaoVal = document.getElementById('statNaoVal');
+
+// Modal elements
+const detailModal = document.getElementById('detailModal');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const modalAvatar = document.getElementById('modalAvatar');
+const modalName = document.getElementById('modalName');
+const modalRole = document.getElementById('modalRole');
+const modalPhone = document.getElementById('modalPhone');
+const modalPhoneBtn = document.getElementById('modalPhoneBtn');
+const modalEmail = document.getElementById('modalEmail');
+const modalEmailBtn = document.getElementById('modalEmailBtn');
+const modalPdfName = document.getElementById('modalPdfName');
+const modalPdfMeta = document.getElementById('modalPdfMeta');
+const modalMessageText = document.getElementById('modalMessageText');
+const modalStatusSelect = document.getElementById('modalStatusSelect');
+const replyTextarea = document.getElementById('replyTextarea');
+const sendReplyBtn = document.getElementById('sendReplyBtn');
+const toastContainer = document.getElementById('toastContainer');
+
+function getInitials(name) {
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+}
+
+function showToast(message, icon = 'fa-circle-check') {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function updateStats() {
+    const total = data.length;
+    const con = data.filter(c => c.status === 'CON').length;
+    const pen = data.filter(c => c.status === 'PEN').length;
+    const nao = data.filter(c => c.status === 'NÃO').length;
+
+    statTotalVal.textContent = total;
+    statConVal.textContent = con;
+    statPenVal.textContent = pen;
+    statNaoVal.textContent = nao;
 }
 
 function renderTable(data) {
@@ -416,78 +286,162 @@ function renderTable(data) {
     if (data.length === 0) {
         emptyState.style.display = 'block';
         return;
+    } else {
+        emptyState.style.display = 'none';
     }
 
-    emptyState.style.display = 'none';
-
-    ordenarCandidatos(data).forEach(item => {
+    data.forEach(item => {
         const tr = document.createElement('tr');
 
         tr.innerHTML = `
-            <td style="font-weight: 600; color: #334155;">#${item.id}</td>
-            <td style="font-weight: 500;">${item.nome}</td>
-            <td style="color: #64748b;">${item.telefone}</td>
-            <td style="color: #64748b;">${item.email}</td>
-            <td class="text-center">
-                <button class="btn-action btn-msg" title="Visualizar Mensagem">
-                    <i class="fa-regular fa-envelope"></i>
-                </button>
-            </td>
-            <td class="text-center">
-                <button class="btn-action btn-cur" title="Visualizar Currículo">
-                    <i class="fa-regular fa-file-pdf"></i>
-                </button>
-            </td>
+            <td style="font-weight: 800; color: var(--accent-red);">#${item.id}</td>
             <td>
-                <select
-                    class="status-select ${getStatusClass(item.status)}"
+                <div class="user-cell">
+                    <div class="avatar-circle">${getInitials(item.nome)}</div>
+                    <div class="user-info">
+                        <div class="user-name">${item.nome}</div>
+                        <div class="user-role">${item.cargo}</div>
+                    </div>
+                </div>
+            </td>
+            <td style="color: var(--text-secondary); font-weight: 500;">${item.telefone}</td>
+            <td style="color: var(--text-secondary);">${item.email}</td>
+            <td>
+                <select 
+                    class="status-select status-${item.status}" 
+                    onchange="handleTableStatusChange(this, ${item.id})"
                 >
-                    <option value="CONTRATADO" ${item.status === 'CONTRATADO' ? 'selected' : ''}>CONTRATADO</option>
-                    <option value="PENDENTE" ${item.status === 'PENDENTE' ? 'selected' : ''}>PENDENTE</option>
+                    <option value="CON" ${item.status === 'CON' ? 'selected' : ''}>CON</option>
+                    <option value="PEN" ${item.status === 'PEN' ? 'selected' : ''}>PEN</option>
                     <option value="NÃO" ${item.status === 'NÃO' ? 'selected' : ''}>NÃO</option>
                 </select>
+            </td>
+            <td style="text-align: right;">
+                <button class="btn-view-details" onclick="openCandidateModal(${item.id})">
+                    <i class="fa-solid fa-address-card"></i> Ver Ficha
+                </button>
             </td>
         `;
 
         tableBody.appendChild(tr);
-        const messageButton = tr.querySelector('.btn-msg');
-        messageButton.addEventListener('click', () => showMessage(item.mensagem));
-
-        const curriculumButton = tr.querySelector('.btn-cur');
-        curriculumButton.addEventListener('click', () => visualizarCurriculum(
-            item.curriculoPath ?? item.curriculo_path,
-            item.nome,
-            item.id
-        ));
-
-        const statusSelect = tr.querySelector('.status-select');
-        statusSelect.addEventListener('change', () => updateStatusStyle(statusSelect, item.id));
     });
 }
 
+function handleTableStatusChange(selectElem, id) {
+    const newStatus = selectElem.value;
+    const item = data.find(c => c.id === id);
+
+    if (item) {
+        item.status = newStatus;
+        selectElem.className = `status-select status-${newStatus}`;
+        
+        if (activeCandidateId === id) {
+            modalStatusSelect.value = newStatus;
+            modalStatusSelect.className = `status-select status-${newStatus}`;
+        }
+
+        updateStats();
+        showToast(`Status do ID #${id} alterado para [${newStatus}]`);
+    }
+}
+
+function openCandidateModal(id) {
+    const candidate = data.find(c => c.id === id);
+    if (!candidate) return;
+
+    activeCandidateId = id;
+
+    modalAvatar.textContent = getInitials(candidate.nome);
+    modalName.textContent = candidate.nome;
+    modalRole.textContent = `${candidate.cargo} • ID #${candidate.id}`;
+
+    modalPhone.textContent = candidate.telefone;
+    modalPhoneBtn.href = `https://wa.me/55${candidate.telefone.replace(/\D/g, '')}`;
+    modalEmail.textContent = candidate.email;
+    modalEmailBtn.href = `mailto:${candidate.email}`;
+
+    modalPdfName.textContent = candidate.pdfName;
+    modalPdfMeta.textContent = `Tamanho: ${candidate.pdfSize} • Enviado em ${candidate.dataEnvio}`;
+
+    modalMessageText.textContent = `"${candidate.mensagem}"`;
+    modalStatusSelect.value = candidate.status;
+    modalStatusSelect.className = `status-select status-${candidate.status}`;
+    replyTextarea.value = '';
+
+    detailModal.classList.add('active');
+    detailModal.setAttribute('aria-hidden', 'false');
+}
+
+function closeModal() {
+    detailModal.classList.remove('active');
+    detailModal.setAttribute('aria-hidden', 'true');
+    activeCandidateId = null;
+}
+
+closeModalBtn.addEventListener('click', closeModal);
+
+detailModal.addEventListener('click', (e) => {
+    if (e.target === detailModal) {
+        closeModal();
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && detailModal.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+modalStatusSelect.addEventListener('change', (e) => {
+    if (activeCandidateId) {
+        const newStatus = e.target.value;
+        const item = data.find(c => c.id === activeCandidateId);
+        if (item) {
+            item.status = newStatus;
+            modalStatusSelect.className = `status-select status-${newStatus}`;
+            
+            const currentSearch = searchInput.value.toLowerCase().trim();
+            filterAndRenderTable(currentSearch);
+            updateStats();
+            
+            showToast(`Status alterado para [${newStatus}] com sucesso.`);
+        }
+    }
+});
+
+sendReplyBtn.addEventListener('click', () => {
+    const text = replyTextarea.value.trim();
+    if (!text) {
+        showToast('Por favor, digite uma mensagem de resposta.', 'fa-triangle-exclamation');
+        return;
+    }
+
+    replyTextarea.value = '';
+    showToast('Resposta enviada com sucesso!', 'fa-paper-plane');
+});
+
+function simulatePdfAction(action) {
+    if (activeCandidateId) {
+        const candidate = data.find(c => c.id === activeCandidateId);
+        showToast(`${action} do arquivo (${candidate.pdfName}) iniciado.`, 'fa-file-pdf');
+    }
+}
+
+function filterAndRenderTable(searchTerm) {
+    const filtered = data.filter(item => {
+        const nameMatch = item.nome.toLowerCase().includes(searchTerm);
+        const roleMatch = item.cargo.toLowerCase().includes(searchTerm);
+        const idMatch = item.id.toString().includes(searchTerm);
+        return nameMatch || roleMatch || idMatch;
+    });
+    renderTable(filtered);
+}
+
 searchInput.addEventListener('input', (e) => {
-    renderTable(candidatosFiltrados());
+    const term = e.target.value.toLowerCase().trim();
+    filterAndRenderTable(term);
 });
 
-sortByIdHeader.addEventListener('click', () => alternarOrdenacao('id'));
-sortByNameHeader.addEventListener('click', () => alternarOrdenacao('name'));
-atualizarIndicadoresOrdenacao();
-
-confirmChangesButton.addEventListener('click', confirmarAlteracoes);
-refreshCandidatesButton.addEventListener('click', atualizarCandidatos);
-closeCurriculumModalButton.addEventListener('click', fecharCurriculo);
-curriculumModal.addEventListener('click', event => {
-    if (event.target === curriculumModal) {
-        fecharCurriculo();
-    }
-});
-document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && !curriculumModal.hidden) {
-        fecharCurriculo();
-    }
-});
-
-window.onload = async () => {
-    await atualizarCandidatos();
-    window.setInterval(atualizarCandidatos, refreshInterval);
-};
+updateStats();
+var data = receberDadosComFallback();
+renderTable(data);

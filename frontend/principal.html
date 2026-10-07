@@ -3,97 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Área do Buscador</title>
+    <title>Gestão de Candidatos - Painel com Tema Vermelho & Branco</title>
+
     <link rel="stylesheet" href="style_principal.css">
     <link rel="icon" href="ico.png">
     
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    
+    <!-- Google Fonts (Inter) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
+
+<!--TODO: 
+ordenação por id e nome;
+botão de atualizar;
+botão de confirmar alterações;
+máscara de telefone e email;
+corrigir botão ver ficha;
+atualizar números de status;
+corrigir tamanho da página;
+botão de apagar candidato;
+modo escuro;
+-->
 <body>
 
-    <div class="container">
-        <header class="page-header">
-            <div class="title-area">
-                <h1>Painel de Gerenciamento</h1>
-                <p>Gerencie contatos, currículos e status de atendimento em tempo real.</p>
+    <div class="dashboard-container">
+        
+        <!-- Red Header Banner -->
+        <header class="red-header-banner">
+            <div class="brand-section">
+                <h1><i class="fa-solid fa-users-gear"></i> Gestão de Candidatos</h1>
+                <p>Monitore requisições, avalie currículos e gerencie candidatos com facilidade.</p>
             </div>
 
-            <div class="header-controls">
-                <div class="search-box">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input
-                        type="text"
-                        id="searchInput"
-                        class="search-input"
-                        placeholder="Buscar por Nome ou ID..."
-                        autocomplete="off"
-                    >
-                </div>
-
-                <button type="button" id="refreshCandidates" class="btn-refresh-candidates">
-                    <i class="fa-solid fa-rotate"></i>
-                    Atualizar
-                </button>
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="Buscar por nome, cargo ou ID..."
+                    autocomplete="off"
+                >
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
             </div>
         </header>
 
-        <main class="card">
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <span class="stat-label">Total de Registros</span>
+                    <div id="statTotalVal" class="stat-value">0</div>
+                </div>
+                <div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div>
+            </div>
+
+            <div class="stat-card stat-con">
+                <div class="stat-info">
+                    <span class="stat-label">Concluídos (CON)</span>
+                    <div id="statConVal" class="stat-value">0</div>
+                </div>
+                <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+            </div>
+
+            <div class="stat-card stat-pen">
+                <div class="stat-info">
+                    <span class="stat-label">Pendentes (PEN)</span>
+                    <div id="statPenVal" class="stat-value">0</div>
+                </div>
+                <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+            </div>
+
+            <div class="stat-card stat-nao">
+                <div class="stat-info">
+                    <span class="stat-label">Recusados (NÃO)</span>
+                    <div id="statNaoVal" class="stat-value">0</div>
+                </div>
+                <div class="stat-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+            </div>
+        </section>
+
+        <main class="table-card">
             <div class="table-wrapper">
-                <table class="data-table">
+                <table class="custom-table">
                     <thead>
                         <tr>
-                            <th id="sortById" class="sortable-header" tabindex="0" role="button">
-                                ID <i id="sortByIdIcon" class="sort-indicator fa-solid fa-arrow-down" aria-hidden="true"></i>
-                            </th>
-                            <th id="sortByName" class="sortable-header" tabindex="0" role="button">
-                                NOME <i id="sortByNameIcon" class="sort-indicator fa-solid fa-sort" aria-hidden="true"></i>
-                            </th>
+                            <th>ID</th>
+                            <th>NOME & CARGO</th>
                             <th>TELEFONE</th>
                             <th>EMAIL</th>
-                            <th class="text-center">MENSAGEM</th>
-                            <th class="text-center">CURRÍCULO</th>
                             <th>STATUS</th>
+                            <th style="text-align: right;">AÇÃO</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
+                        <!-- Dynamic JavaScript Rows -->
                     </tbody>
                 </table>
             </div>
 
-            
             <div id="emptyState" class="empty-state">
-                <i class="fa-solid fa-folder-open"></i>
-                <p>Nenhum registro foi encontrado com os termos pesquisados.</p>
-            </div>
-
-            <div class="table-actions">
-                <button type="button" id="confirmChanges" class="btn-confirm-changes">
-                    <i class="fa-solid fa-check"></i>
-                    Confirmar alterações
-                </button>
+                <i class="fa-solid fa-user-slash"></i>
+                <p>Nenhum registro foi encontrado para o termo pesquisado.</p>
             </div>
         </main>
     </div>
 
-    <div id="curriculumModal" class="curriculum-modal" hidden>
-        <div class="curriculum-modal-panel" role="dialog" aria-modal="true" aria-labelledby="curriculumModalTitle">
-            <div class="curriculum-modal-header">
-                <h2 id="curriculumModalTitle">Currículo</h2>
-                <button type="button" id="closeCurriculumModal" class="modal-close-button" title="Fechar visualização" aria-label="Fechar visualização">
+    <div id="detailModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-user-profile">
+                    <div id="modalAvatar" class="avatar-circle modal-avatar">AB</div>
+                    <div class="modal-user-details">
+                        <h2 id="modalName">Nome do Candidato</h2>
+                        <p id="modalRole">Cargo / Função</p>
+                    </div>
+                </div>
+                <button id="closeModalBtn" class="modal-close-btn" title="Fechar Modal">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <div id="curriculumPreview" class="curriculum-preview" aria-live="polite">
-                <p class="curriculum-viewer-status">Carregando currículo...</p>
+            <div class="modal-body">
+                <!-- Section 1: Contacts -->
+                <div>
+                    <div class="modal-section-title">
+                        <i class="fa-solid fa-address-card"></i> Informações de Contato
+                    </div>
+                    <div class="contact-grid">
+                        <div class="contact-card">
+                            <div class="contact-info">
+                                <div class="label">Telefone / WhatsApp</div>
+                                <div id="modalPhone" class="val">(00) 00000-0000</div>
+                            </div>
+                            <a id="modalPhoneBtn" href="#" target="_blank" class="btn-shortcut" title="Ligar / WhatsApp">
+                                <i class="fa-solid fa-phone"></i>
+                            </a>
+                        </div>
+                        <div class="contact-card">
+                            <div class="contact-info">
+                                <div class="label">E-mail de Contato</div>
+                                <div id="modalEmail" class="val">email@exemplo.com</div>
+                            </div>
+                            <a id="modalEmailBtn" href="#" class="btn-shortcut" title="Enviar E-mail">
+                                <i class="fa-solid fa-envelope"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: PDF Document Card -->
+                <div>
+                    <div class="modal-section-title">
+                        <i class="fa-solid fa-file-pdf"></i> Currículo Anexo
+                    </div>
+                    <div class="pdf-card">
+                        <div class="pdf-file-details">
+                            <div class="pdf-icon-box">
+                                <i class="fa-solid fa-file-pdf"></i>
+                            </div>
+                            <div>
+                                <div id="modalPdfName" class="pdf-file-name">Curriculo_Documento.pdf</div>
+                                <div id="modalPdfMeta" class="pdf-file-meta">Tamanho: 1.8 MB • Enviado em 10/10/2026</div>
+                            </div>
+                        </div>
+                        <div class="pdf-actions">
+                            <button class="btn-pdf" onclick="simulatePdfAction('Visualizar')">
+                                <i class="fa-solid fa-eye"></i> Visualizar
+                            </button>
+                            <button class="btn-pdf" onclick="simulatePdfAction('Download')">
+                                <i class="fa-solid fa-download"></i> Baixar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Message & Reply -->
+                <div>
+                    <div class="modal-section-title">
+                        <i class="fa-solid fa-comments"></i> Histórico da Mensagem
+                    </div>
+                    <div class="message-box">
+                        <div id="modalMessageText" class="message-content">
+                            Carregando mensagem do candidato...
+                        </div>
+                        
+                        <div class="quick-reply-area">
+                            <textarea id="replyTextarea" class="reply-textarea" placeholder="Escreva uma resposta rápida para este contato..."></textarea>
+                            
+                            <div class="reply-actions-bar">
+                                <div class="modal-status-wrapper">
+                                    <span>Status:</span>
+                                    <select id="modalStatusSelect" class="status-select">
+                                        <option value="CON">CON (Concluído)</option>
+                                        <option value="PEN">PEN (Pendente)</option>
+                                        <option value="NÃO">NÃO (Recusado)</option>
+                                    </select>
+                                </div>
+
+                                <button id="sendReplyBtn" class="btn-send-reply">
+                                    <i class="fa-solid fa-paper-plane"></i> Enviar Resposta
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script type="module" src="gerenciaCandidatos.js"></script>
 </body>
