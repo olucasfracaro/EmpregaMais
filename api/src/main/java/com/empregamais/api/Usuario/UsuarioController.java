@@ -1,18 +1,13 @@
 package com.empregamais.api.Usuario;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -22,23 +17,6 @@ public class UsuarioController {
 
     public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
-    }
-
-    @GetMapping("/usuarios")
-    public ResponseEntity<List<UsuarioResponseDTO>> buscarTodos() {
-        List<UsuarioResponseDTO> usuarios = usuarioService.buscarUsuarios()
-            .stream()
-            .map((Usuario usuario) -> this.toDTO(usuario))
-            .toList();
-
-        return ResponseEntity.ok(usuarios);
-    }
-
-    @GetMapping("/usuario/{id}")
-    public ResponseEntity<UsuarioResponseDTO> getUsuario(@PathVariable Long id) {
-        Optional<Usuario> usuario = usuarioService.buscarUsuarioPorId(id);
-        return usuario.map(value -> ResponseEntity.ok(toDTO(value)))
-                        .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/usuario/login")
@@ -51,58 +29,5 @@ public class UsuarioController {
         }
 
         return ResponseEntity.ok().build();
-    }
-
-
-    @PutMapping("/usuario/{id}")
-    public ResponseEntity<UsuarioResponseDTO> atualizarUsuarioCompleto(@PathVariable Long id,
-                                                                @RequestBody UsuarioRequestDTO request) {
-        Optional<Usuario> usuarioExistente = usuarioService.buscarUsuarioPorId(id);
-
-        if (usuarioExistente.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Usuario usuarioAtualizado = usuarioExistente.get();
-
-        usuarioAtualizado.setNome(request.nome());
-        usuarioAtualizado.setEmail(request.email());
-        usuarioAtualizado.setSenha(request.senha());
-        
-        usuarioAtualizado.setUpdatedAt(OffsetDateTime.now());
-
-        Usuario salvo = usuarioService.atualizarUsuario(usuarioAtualizado);
-        return ResponseEntity.ok(toDTO(salvo));
-    }
-
-    @PatchMapping("/usuario/{id}")
-    public ResponseEntity<UsuarioResponseDTO> atualizarUsuario(@PathVariable Long id,
-                                                           @RequestBody UsuarioRequestDTO request) {
-        Optional<Usuario> usuarioExistente = usuarioService.buscarUsuarioPorId(id);
-
-        if (usuarioExistente.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Usuario usuarioAtualizado = usuarioExistente.get();
-        if (request.nome() != null)     { usuarioAtualizado.setNome(request.nome()); }
-        if (request.email() != null)    { usuarioAtualizado.setEmail(request.email()); }
-        if (request.senha() != null)    { usuarioAtualizado.setSenha(request.senha()); }
-        
-        usuarioAtualizado.setUpdatedAt(OffsetDateTime.now());
-
-        Usuario salvo = usuarioService.atualizarUsuario(usuarioAtualizado);
-        return ResponseEntity.ok(toDTO(salvo));
-    }
-
-    private UsuarioResponseDTO toDTO(Usuario usuario) {
-        return new UsuarioResponseDTO(
-            usuario.getId(),
-            usuario.getNome(),
-            usuario.getEmail(),
-            usuario.getSenha(),
-            usuario.getCreatedAt(),
-            usuario.getUpdatedAt()
-        );
     }
 }

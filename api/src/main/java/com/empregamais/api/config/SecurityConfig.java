@@ -44,8 +44,6 @@ public class SecurityConfig {
 
                     "/usuario",
                     "/usuario/**",
-                    "/usuarios",
-                    "/usuarios/**",
 
                     "/analise",
                     "/analise/**",

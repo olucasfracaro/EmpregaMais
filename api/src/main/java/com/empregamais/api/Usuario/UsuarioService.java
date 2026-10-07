@@ -1,6 +1,5 @@
 package com.empregamais.api.Usuario;
 
-import java.util.List;
 import java.util.Optional;
 import java.security.MessageDigest;
 
@@ -15,27 +14,8 @@ public class UsuarioService {
     @Autowired
     private UsuarioRepository repository;
 
-    public Usuario criarUsuario(Usuario usuario) {
-        if (repository.existsByEmail(usuario.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "E-mail já cadastrado");
-        }
-        return repository.save(usuario);
-    }
-
-    public Usuario atualizarUsuario(Usuario usuario) {
-        return repository.save(usuario);
-    }
-
-    public Optional<Usuario> buscarUsuarioPorId(Long id) {
-        return repository.findById(id);
-    }
-
     public Optional<Usuario> buscarPorEmail(String email) {
         return repository.findByEmail(email);
-    }
-
-    public List<Usuario> buscarUsuarios() {
-        return repository.findAll();
     }
 
     public boolean verificarLogin(String email, String senha) {
