@@ -1,5 +1,5 @@
 function redirecionar() {
-    window.location.href = "/principal.html";
+    window.location.href = "/principal";
 }
 
 async function enviarLoginComFallback(payload) {

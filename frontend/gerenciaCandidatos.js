@@ -33,7 +33,7 @@ let visualizacaoAtual = 0;
 
 const usuario = localStorage.getItem("usuarioLogado");
 if (!usuario) {
-    window.location.href = "login.html";
+    window.location.href = "/login";
 }
 
 async function receberDadosComFallback() {
