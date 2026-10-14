@@ -86,31 +86,21 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-resources-plugin</artifactId>
-				<version>3.3.1</version>
-
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>3.1.0</version>
 				<executions>
 					<execution>
 						<id>copy-frontend</id>
 						<phase>process-resources</phase>
 						<goals>
-							<goal>copy-resources</goal>
+							<goal>run</goal>
 						</goals>
-
 						<configuration>
-							<outputDirectory>
-								${project.build.outputDirectory}/static
-							</outputDirectory>
-
-							<resources>
-								<resource>
-									<directory>
-										${project.basedir}/../frontend
-									</directory>
-
-									<filtering>false</filtering>
-								</resource>
-							</resources>
+							<target>
+								<copy todir="${project.build.outputDirectory}/static" overwrite="true">
+									<fileset dir="${project.basedir}/../frontend" />
+								</copy>
+							</target>
 						</configuration>
 					</execution>
 				</executions>
