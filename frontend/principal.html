@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -7,48 +7,66 @@
 
     <link rel="stylesheet" href="style_principal.css">
     <link rel="icon" href="ico.png">
-    
-    <!-- FontAwesome Icons -->
+   
+   
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts (Inter) -->
+   
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 
-<!--TODO: 
-ordenação por id e nome;
-botão de atualizar;
-botão de confirmar alterações;
-máscara de telefone e email;
-corrigir botão ver ficha;
-atualizar números de status;
-corrigir tamanho da página;
-botão de apagar candidato;
-modo escuro;
--->
 <body>
 
     <div class="dashboard-container">
+       
         
-        <!-- Red Header Banner -->
         <header class="red-header-banner">
             <div class="brand-section">
                 <h1><i class="fa-solid fa-users-gear"></i> Gestão de Candidatos</h1>
                 <p>Monitore requisições, avalie currículos e gerencie candidatos com facilidade.</p>
             </div>
 
-            <div class="search-container">
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    class="search-input" 
-                    placeholder="Buscar por nome, cargo ou ID..."
-                    autocomplete="off"
-                >
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <div class="header-actions">
+                <div class="search-container">
+                    <input
+                        type="text"
+                        id="searchInput"
+                        class="search-input"
+                        placeholder="Buscar por nome, cargo ou ID..."
+                        autocomplete="off"
+                    >
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                </div>
+
+                
+                <button id="darkModeToggle" class="btn-header-action" title="Alternar Modo Escuro">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
             </div>
         </header>
+
+        <div class="toolbar-card">
+            <div class="toolbar-group">
+                <button id="refreshBtn" class="btn-toolbar" title="Recarregar Dados">
+                    <i class="fa-solid fa-rotate-right"></i> Atualizar
+                </button>
+                <button id="saveChangesBtn" class="btn-toolbar btn-save" title="Salvar e Confirmar Alterações">
+                    <i class="fa-solid fa-floppy-disk"></i> Confirmar Alterações
+                </button>
+            </div>
+
+            
+            <div class="toolbar-group">
+                <span class="toolbar-label"><i class="fa-solid fa-sort"></i> Ordenar:</span>
+                <select id="sortUnifiedSelect" class="btn-toolbar sort-select">
+                    <option value="id_asc">ID (Crescente)</option>
+                    <option value="id_desc">ID (Decrescente)</option>
+                    <option value="name_asc">Nome (A-Z)</option>
+                    <option value="name_desc">Nome (Z-A)</option>
+                </select>
+            </div>
+        </div>
 
         <section class="stats-grid">
             <div class="stat-card">
@@ -89,16 +107,16 @@ modo escuro;
                 <table class="custom-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>NOME & CARGO</th>
+                            <th data-sort="id">ID</th>
+                            <th data-sort="name">NOME & CARGO</th>
                             <th>TELEFONE</th>
                             <th>EMAIL</th>
                             <th>STATUS</th>
-                            <th style="text-align: right;">AÇÃO</th>
+                            <th style="text-align: right;">AÇÕES</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <!-- Dynamic JavaScript Rows -->
+                        <!-- Linhas geradas via JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -110,6 +128,7 @@ modo escuro;
         </main>
     </div>
 
+    <!-- Modal de Ficha -->
     <div id="detailModal" class="modal-overlay" aria-hidden="true">
         <div class="modal-card">
             <div class="modal-header">
@@ -126,7 +145,7 @@ modo escuro;
             </div>
 
             <div class="modal-body">
-                <!-- Section 1: Contacts -->
+                
                 <div>
                     <div class="modal-section-title">
                         <i class="fa-solid fa-address-card"></i> Informações de Contato
@@ -153,7 +172,7 @@ modo escuro;
                     </div>
                 </div>
 
-                <!-- Section 2: PDF Document Card -->
+                
                 <div>
                     <div class="modal-section-title">
                         <i class="fa-solid fa-file-pdf"></i> Currículo Anexo
@@ -165,21 +184,21 @@ modo escuro;
                             </div>
                             <div>
                                 <div id="modalPdfName" class="pdf-file-name">Curriculo_Documento.pdf</div>
-                                <div id="modalPdfMeta" class="pdf-file-meta">Tamanho: 1.8 MB • Enviado em 10/10/2026</div>
+                                <div id="modalPdfMeta" class="pdf-file-meta">Tamanho: 1.8 MB • Enviado recentemente</div>
                             </div>
                         </div>
                         <div class="pdf-actions">
-                            <button class="btn-pdf" onclick="simulatePdfAction('Visualizar')">
+                            <button class="btn-pdf" onclick="window.simulatePdfAction('Visualizar')">
                                 <i class="fa-solid fa-eye"></i> Visualizar
                             </button>
-                            <button class="btn-pdf" onclick="simulatePdfAction('Download')">
+                            <button class="btn-pdf" onclick="window.simulatePdfAction('Download')">
                                 <i class="fa-solid fa-download"></i> Baixar
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Section 3: Message & Reply -->
+                
                 <div>
                     <div class="modal-section-title">
                         <i class="fa-solid fa-comments"></i> Histórico da Mensagem
@@ -188,10 +207,10 @@ modo escuro;
                         <div id="modalMessageText" class="message-content">
                             Carregando mensagem do candidato...
                         </div>
-                        
+                       
                         <div class="quick-reply-area">
                             <textarea id="replyTextarea" class="reply-textarea" placeholder="Escreva uma resposta rápida para este contato..."></textarea>
-                            
+                           
                             <div class="reply-actions-bar">
                                 <div class="modal-status-wrapper">
                                     <span>Status:</span>
@@ -202,9 +221,14 @@ modo escuro;
                                     </select>
                                 </div>
 
-                                <button id="sendReplyBtn" class="btn-send-reply">
-                                    <i class="fa-solid fa-paper-plane"></i> Enviar Resposta
-                                </button>
+                                <div class="modal-actions-right">
+                                    <button id="modalDeleteBtn" class="btn-delete-modal" title="Excluir Candidato">
+                                        <i class="fa-solid fa-trash"></i> Apagar
+                                    </button>
+                                    <button id="sendReplyBtn" class="btn-send-reply">
+                                        <i class="fa-solid fa-paper-plane"></i> Responder
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -213,9 +237,9 @@ modo escuro;
         </div>
     </div>
 
-    <!-- Notification Toast Container -->
+    
     <div id="toastContainer" class="toast-container"></div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
     <script type="module" src="gerenciaCandidatos.js"></script>
 </body>
 </html>
