@@ -1,6 +1,6 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.local.js';
 
-// Configuração do PDF.js
+
 const pdfjsLib = globalThis.pdfjsLib;
 if (pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -400,16 +400,16 @@ function renderTable() {
                     <option value="NÃO" ${item.status === 'NÃO' ? 'selected' : ''}>NÃO</option>
                 </select>
             </td>
-            <td style="text-align: right;">
-                <div class="actions-cell" style="display: flex; gap: 8px; justify-content: flex-end;">
-                    <button class="btn-view-details" onclick="window.openCandidateModal(${item.id})">
-                        <i class="fa-solid fa-address-card"></i> Ver Ficha
-                    </button>
-                    <button class="btn-action-delete" title="Excluir Candidato" onclick="window.apagarCandidato(${item.id})">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            </td>
+    <div class="actions-cell" style="display: flex; gap: 8px; justify-content: flex-end;">
+        <!-- Classe corrigida para btn-action-view e ID entre aspas -->
+        <button class="btn-action-view" onclick="window.openCandidateModal('${item.id}')">
+            <i class="fa-solid fa-address-card"></i> Ver Ficha
+        </button>
+        <button class="btn-action-delete" title="Excluir Candidato" onclick="window.apagarCandidato('${item.id}')">
+            <i class="fa-solid fa-trash"></i>
+        </button>
+    </div>
+</td>
         `;
         tableBody.appendChild(tr);
     });
@@ -437,7 +437,7 @@ window.handleTableStatusChange = function(selectElem, id) {
 };
 
 window.openCandidateModal = function(id) {
-    const candidate = candidatos.find(c => c.id === id);
+    const candidate = candidatos.find(c => String(c.id) === String(id));
     if (!candidate) return;
 
     activeCandidateId = id;
