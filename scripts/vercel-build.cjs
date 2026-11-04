@@ -2,7 +2,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const config = {
-  apiBaseUrl: process.env.VERCEL_API_URL || process.env.API_BASE_URL || "",
+  apiBaseUrl: process.env.VERCEL_API_URL
+    || process.env.API_BASE_URL
+    || "https://psychic-space-cod-4jj796xvj5fj544-8080.app.github.dev",
   supabaseUrl: process.env.SUPABASE_URL || "https://kampbrxrosxtspcmgewr.supabase.co",
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY || ""
 };
