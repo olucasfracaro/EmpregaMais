@@ -49,7 +49,7 @@ const mockData = [
 let candidatos = [];
 const alteracoesPendentes = new Map();
 const curriculoBaseUrl = 'https://kampbrxrosxtspcmgewr.supabase.co/storage/v1/object/public/curriculos/';
-const candidatosCacheKey = 'candidatosCache';
+const candidatosCacheKey = 'candidatosCache-v2';
 const candidatosCacheTtl = 5 * 60 * 1000;
 
 let campoOrdenacao = 'id';
@@ -144,7 +144,7 @@ function normalizarDados(dados) {
         mensagem: item.mensagem || item.message || 'Sem mensagem.',
         status: normalizarStatus(item.status),
         curriculoPath: item.curriculo_path || item.curriculoPath || item.curriculo || item.pdfName || '',
-        pdfSize: item.pdfSize || '1.8 MB',
+        pdfSize: item.pdfSize || '',
         dataEnvio: item.dataEnvio || '10/10/2026'
     }));
 }
@@ -418,7 +418,7 @@ window.openCandidateModal = function(id) {
     const candidate = candidatos.find(c => String(c.id) === String(id));
     if (!candidate) return;
 
-    activeCandidateId = id;
+    activeCandidateId = candidate.id;
 
     if (modalAvatar) modalAvatar.textContent = getInitials(candidate.nome);
     if (modalName) modalName.textContent = candidate.nome;
@@ -437,7 +437,10 @@ window.openCandidateModal = function(id) {
             ? candidate.curriculoPath.split('/').pop()
             : 'Currículo não disponível';
     }
-    if (modalPdfMeta) modalPdfMeta.textContent = `Tamanho: ${candidate.pdfSize} • Enviado em ${candidate.dataEnvio}`;
+    if (modalPdfMeta) {
+        modalPdfMeta.textContent = `Tamanho: ${candidate.pdfSize || 'calculando...'} • Enviado em ${candidate.dataEnvio}`;
+    }
+    atualizarTamanhoCurriculo(candidate);
 
     if (modalMessageText) modalMessageText.textContent = `"${candidate.mensagem}"`;
     if (modalStatusSelect) {
@@ -503,6 +506,51 @@ function obterCurriculoUrl(caminhoOriginal) {
     return `${baseUrl}/storage/v1/object/public/curriculos/${caminhoCodificado}`;
 }
 
+function formatarTamanhoArquivo(bytes) {
+    if (!Number.isFinite(bytes) || bytes < 0) return '';
+    if (bytes < 1024) return `${bytes} B`;
+
+    const unidades = ['KB', 'MB', 'GB'];
+    let tamanho = bytes;
+    let unidade = -1;
+
+    do {
+        tamanho /= 1024;
+        unidade += 1;
+    } while (tamanho >= 1024 && unidade < unidades.length - 1);
+
+    return `${tamanho.toFixed(tamanho >= 10 ? 1 : 2)} ${unidades[unidade]}`;
+}
+
+async function atualizarTamanhoCurriculo(candidate) {
+    const fileUrl = obterCurriculoUrl(candidate.curriculoPath);
+    if (!fileUrl) return;
+
+    try {
+        const response = await fetch(fileUrl, { method: 'HEAD' });
+        if (!response.ok) throw new Error(`Erro ao consultar currículo: ${response.status}`);
+
+        let tamanho = formatarTamanhoArquivo(Number(response.headers.get('content-length')));
+        if (!tamanho) {
+            const fileResponse = await fetch(fileUrl);
+            if (!fileResponse.ok) {
+                throw new Error(`Erro ao consultar currículo: ${fileResponse.status}`);
+            }
+            const blob = await fileResponse.blob();
+            tamanho = formatarTamanhoArquivo(blob.size);
+        }
+        if (!tamanho) return;
+
+        candidate.pdfSize = tamanho;
+        salvarCandidatosNoCache(candidatos);
+        if (activeCandidateId === candidate.id && modalPdfMeta) {
+            modalPdfMeta.textContent = `Tamanho: ${tamanho} • Enviado em ${candidate.dataEnvio}`;
+        }
+    } catch (error) {
+        console.warn('Não foi possível consultar o tamanho do currículo:', error);
+    }
+}
+
 window.simulatePdfAction = function(action) {
     if (!activeCandidateId) return;
 
@@ -548,15 +596,34 @@ window.simulatePdfAction = function(action) {
         showToast('Abrindo currículo...', 'fa-file-pdf');
 
     } else if (action === 'Download') {
-        // Abre o arquivo público em outra aba.
-        // O navegador poderá exibir o PDF em vez de baixá-lo,
-        // dependendo dos cabeçalhos enviados pelo Supabase.
-        window.open(fileUrl, '_blank', 'noopener');
-
-        showToast(
-            'Abrindo currículo para download...',
-            'fa-download'
-        );
+        fetch(fileUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro ao baixar currículo: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                const nomeArquivo = candidate.curriculoPath
+                    .split('/')
+                    .pop()
+                    ?.replace(/_+$/, '') || 'curriculo.pdf';
+                link.download = nomeArquivo.toLowerCase().endsWith('.pdf')
+                    ? nomeArquivo
+                    : `${nomeArquivo}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(blobUrl);
+                showToast('Currículo baixado com sucesso.', 'fa-download');
+            })
+            .catch(error => {
+                console.error(error);
+                showToast('Não foi possível baixar o currículo.', 'fa-triangle-exclamation');
+            });
     }
 };
 
@@ -565,12 +632,7 @@ function fecharCurriculo() {
     visualizacaoAtual += 1;
 
     if (curriculumPreview) {
-        const blobUrl = curriculumPreview.dataset.blobUrl;
-
         curriculumPreview.replaceChildren();
-        delete curriculumPreview.dataset.blobUrl;
-
-        liberarUrlBlob(blobUrl);
     }
 
     if (curriculumModal) {
@@ -609,7 +671,6 @@ function setupDarkMode() {
         const dark = document.body.classList.toggle('dark-mode');
         localStorage.setItem('theme_dark', dark);
         darkModeToggle.innerHTML = dark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
-        showToast(dark ? 'Modo Escuro ativado.' : 'Modo Claro ativado.', 'fa-moon');
     });
 }
 
