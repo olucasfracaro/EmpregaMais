@@ -56,13 +56,13 @@ body {
     display: flex;
     justify-content: center;
     padding: 24px 16px;
-    zoom: 0.9;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .dashboard-container {
     width: 100%;
     max-width: 1280px;
+    zoom: 0.9;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -758,6 +758,9 @@ body {
 @media (max-width: 768px) {
     body {
         padding: 12px 8px;
+    }
+
+    .dashboard-container {
         zoom: 1;
     }
 
