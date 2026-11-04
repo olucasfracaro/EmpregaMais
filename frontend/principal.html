@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        if (!sessionStorage.getItem("usuarioLogado")) {
+            window.location.replace("/login");
+        }
+    </script>
     <title>Gestão de Candidatos - Painel com Tema Vermelho & Branco</title>
 
     <link rel="stylesheet" href="style_principal.css">

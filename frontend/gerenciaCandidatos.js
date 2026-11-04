@@ -96,9 +96,9 @@ const statNaoVal = document.getElementById('statNaoVal');
 const darkModeToggle = document.getElementById('darkModeToggle');
 
 
-const usuario = localStorage.getItem("usuarioLogado");
+const usuario = sessionStorage.getItem("usuarioLogado");
 if (!usuario) {
-    localStorage.setItem("usuarioLogado", "admin"); 
+    window.location.replace("/login");
 }
 
 
