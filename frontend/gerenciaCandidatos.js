@@ -94,6 +94,8 @@ const statConVal = document.getElementById('statConVal');
 const statPenVal = document.getElementById('statPenVal');
 const statNaoVal = document.getElementById('statNaoVal');
 const darkModeToggle = document.getElementById('darkModeToggle');
+const apiStatusIndicator = document.getElementById('apiStatusIndicator');
+const apiStatusText = document.getElementById('apiStatusText');
 
 
 const usuario = sessionStorage.getItem("usuarioLogado");
@@ -672,9 +674,42 @@ function setupDarkMode() {
     });
 }
 
+async function verificarStatusApi() {
+    if (!apiStatusIndicator || !apiStatusText) return;
+
+    apiStatusIndicator.className = 'api-status-indicator is-checking';
+    apiStatusText.textContent = 'Verificando status da API...';
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/candidatos`, {
+            method: 'GET',
+            signal: controller.signal,
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error(`API retornou ${response.status}`);
+        }
+
+        apiStatusIndicator.className = 'api-status-indicator is-online';
+        apiStatusText.textContent = 'API online';
+    } catch (error) {
+        apiStatusIndicator.className = 'api-status-indicator is-offline';
+        apiStatusText.textContent = 'API offline';
+        console.warn('Não foi possível verificar o status da API:', error);
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     setupDarkMode();
+    verificarStatusApi();
+    setInterval(verificarStatusApi, 60 * 1000);
     carregarDadosIniciais();
 
     if (searchInput) searchInput.addEventListener('input', renderTable);
@@ -686,6 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (refreshCandidatesButton) {
         refreshCandidatesButton.addEventListener('click', () => {
             localStorage.removeItem(candidatosCacheKey);
+            verificarStatusApi();
             carregarDadosIniciais();
             showToast('Dados atualizados com sucesso!', 'fa-rotate-right');
         });
