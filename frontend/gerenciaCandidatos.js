@@ -1,4 +1,4 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.local.js';
+import { API_BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
 
 const pdfjsLib = globalThis.pdfjsLib;
@@ -151,35 +151,24 @@ function normalizarDados(dados) {
 
 
 async function receberDadosComFallback() {
-    const urls = [
-        "/candidatos",
-        "https://psychic-space-cod-4jj796xvj5fj544-8080.app.github.dev/candidatos",
-        "http://localhost:8080/candidatos"
-    ];
+    try {
+        const response = await fetch(`${API_BASE_URL}/candidatos`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" }
+        });
 
-    let lastError;
-    for (const url of urls) {
-        try {
-            const response = await fetch(url, {
-                method: "GET",
-                headers: { "Content-Type": "application/json" }
-            });
-
-            if (!response.ok) {
-                lastError = new Error(`Erro no servidor: ${response.status}`);
-                continue;
-            }
-
-            const dados = await response.json();
-            if (!Array.isArray(dados)) {
-                throw new Error("A resposta da API não contém uma lista de candidatos");
-            }
-            return dados;
-        } catch (error) {
-            lastError = error;
+        if (!response.ok) {
+            throw new Error(`Erro no servidor: ${response.status}`);
         }
+
+        const dados = await response.json();
+        if (!Array.isArray(dados)) {
+            throw new Error("A resposta da API não contém uma lista de candidatos");
+        }
+        return dados;
+    } catch (error) {
+        throw error instanceof Error ? error : new Error("Falha ao receber dados");
     }
-    throw lastError || new Error("Falha ao receber dados");
 }
 
 function receberCandidatosDoCache() {
@@ -207,31 +196,20 @@ function salvarCandidatosNoCache(dados) {
 }
 
 async function atualizarStatusComFallback(id, status) {
-    const urls = [
-        `/candidato/${id}`,
-        `https://fantastic-space-pancake-4j66jpw9gjp63qpjg-8080.app.github.dev/candidato/${id}`,
-        `http://localhost:8080/candidato/${id}`
-    ];
+    try {
+        const response = await fetch(`${API_BASE_URL}/candidato/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
 
-    let lastError;
-    for (const url of urls) {
-        try {
-            const response = await fetch(url, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            });
-
-            if (!response.ok) {
-                lastError = new Error(`Erro ao atualizar candidato ${id}: ${response.status}`);
-                continue;
-            }
-            return response.json();
-        } catch (error) {
-            lastError = error;
+        if (!response.ok) {
+            throw new Error(`Erro ao atualizar candidato ${id}: ${response.status}`);
         }
+        return response.json();
+    } catch (error) {
+        throw error instanceof Error ? error : new Error(`Falha ao atualizar candidato ${id}`);
     }
-    throw lastError || new Error(`Falha ao atualizar candidato ${id}`);
 }
 
 async function confirmarAlteracoes() {

@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "buildCommand": "node scripts/vercel-build.cjs",
+  "outputDirectory": "frontend",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/principal",
+      "destination": "/principal.html"
+    }
+  ]
+}

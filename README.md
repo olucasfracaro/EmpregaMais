@@ -43,6 +43,24 @@ Desenvolver uma solução que auxilie na análise de currículos e na avaliaçã
 
 </div>
 
+## Deploy na Vercel
+
+A Vercel hospeda o frontend estático em `frontend/`. A API Spring Boot deve ser
+hospedada separadamente em um serviço compatível com Java (por exemplo,
+Render, Railway ou uma VM).
+
+1. Importe este repositório na Vercel.
+2. Configure `VERCEL_API_URL` com a URL pública da API, sem a barra final.
+3. Configure `SUPABASE_ANON_KEY` nas variáveis de ambiente da Vercel. O valor
+   de `SUPABASE_URL` pode ser mantido no padrão do projeto ou configurado
+   explicitamente.
+4. Na hospedagem da API, configure as variáveis `SUPABASE_DB_*`,
+   `SWAGGER_USERNAME` e `SWAGGER_PASSWORD`. A porta é lida de `PORT`, com
+   `8080` como padrão.
+
+O build da Vercel gera `frontend/config.js` com essas configurações. A API
+precisa permitir requisições CORS originadas pelo domínio publicado na Vercel.
+
 ## Fluxo da solução
 
 1. O sistema cadastra candidatos e currículos.

@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.local.js";
+import { API_BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function uploadCurriculo(file) {
@@ -25,33 +25,15 @@ async function uploadCurriculo(file) {
 }
 
 async function enviarCandidatoComFallback(payload) {
-    const urls = [
-        "https://psychic-space-cod-4jj796xvj5fj544-8080.app.github.dev/candidato",
-        "http://localhost:8080/candidato"
-    ];
-
-    let lastError;
-
-    for (const url of urls) {
-        try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            if (response.status >= 500) {
-                lastError = new Error("Erro no servidor: " + response.status);
-                continue;
-            }
-
-            return response;
-        } catch (error) {
-            lastError = error;
-        }
+    try {
+        return await fetch(`${API_BASE_URL}/candidato`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {
+        throw new Error("Não foi possível conectar à API", { cause: error });
     }
-
-    throw lastError || new Error("Falha ao enviar cadastro");
 }
 
 document.addEventListener("DOMContentLoaded", () => {

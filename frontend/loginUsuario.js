@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "./config.js";
+
 function redirecionar() {
     window.location.href = "/principal";
 }
@@ -9,33 +11,15 @@ if (sessionStorage.getItem("usuarioLogado")) {
 localStorage.removeItem("usuarioLogado");
 
 async function enviarLoginComFallback(payload) {
-    const urls = [
-        "https://psychic-space-cod-4jj796xvj5fj544-8080.app.github.dev/usuario/login",
-        "http://localhost:8080/usuario/login"
-    ];
-
-    let lastError;
-
-    for (const url of urls) {
-        try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            if (response.status >= 500) {
-                lastError = new Error("Erro no servidor: " + response.status);
-                continue;
-            }
-
-            return response;
-        } catch (error) {
-            lastError = error;
-        }
+    try {
+        return await fetch(`${API_BASE_URL}/usuario/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {
+        throw new Error("Não foi possível conectar à API", { cause: error });
     }
-
-    throw lastError || new Error("Falha ao enviar login");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
