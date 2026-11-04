@@ -378,16 +378,14 @@ function renderTable() {
                     <option value="NÃO" ${item.status === 'NÃO' ? 'selected' : ''}>NÃO</option>
                 </select>
             </td>
-    <div class="actions-cell" style="display: flex; gap: 8px; justify-content: flex-end;">
-        <!-- Classe corrigida para btn-action-view e ID entre aspas -->
-        <button class="btn-action-view" onclick="window.openCandidateModal('${item.id}')">
-            <i class="fa-solid fa-address-card"></i> Ver Ficha
-        </button>
-        <button class="btn-action-delete" title="Excluir Candidato" onclick="window.apagarCandidato('${item.id}')">
-            <i class="fa-solid fa-trash"></i>
-        </button>
-    </div>
-</td>
+            <td class="actions-cell">
+                <button class="btn-action-view" onclick="window.openCandidateModal('${item.id}')">
+                    <i class="fa-solid fa-address-card"></i> Ver Ficha
+                </button>
+                <button class="btn-action-delete" title="Excluir Candidato" onclick="window.apagarCandidato('${item.id}')">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </td>
         `;
         tableBody.appendChild(tr);
     });
