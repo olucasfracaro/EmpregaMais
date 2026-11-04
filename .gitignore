@@ -36,3 +36,4 @@ api/!**/src/test/**/build/
 
 ### VS Code ###
 api/.vscode/
+.vercel

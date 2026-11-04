@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "framework": null,
   "buildCommand": "node scripts/vercel-build.cjs",
   "outputDirectory": "frontend",
   "cleanUrls": true,
