@@ -705,11 +705,17 @@ async function verificarStatusApi() {
     }
 }
 
+async function atualizarStatusETabela() {
+    await verificarStatusApi();
+    localStorage.removeItem(candidatosCacheKey);
+    await carregarDadosIniciais();
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     setupDarkMode();
     verificarStatusApi();
-    setInterval(verificarStatusApi, 60 * 1000);
+    setInterval(atualizarStatusETabela, 60 * 1000);
     carregarDadosIniciais();
 
     if (searchInput) searchInput.addEventListener('input', renderTable);
@@ -720,9 +726,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (refreshCandidatesButton) {
         refreshCandidatesButton.addEventListener('click', () => {
-            localStorage.removeItem(candidatosCacheKey);
-            verificarStatusApi();
-            carregarDadosIniciais();
+            atualizarStatusETabela();
             showToast('Dados atualizados com sucesso!', 'fa-rotate-right');
         });
     }
