@@ -1,25 +1,31 @@
-import { API_BASE_URL } from "./config.js";
+import { getAdminSession, supabase } from "./auth.js";
+
+async function autenticar(email, senha) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: senha
+    });
+
+    if (error) {
+        throw new Error("E-mail ou senha inválidos");
+    }
+
+    if (data.user?.app_metadata?.role !== "admin") {
+        await supabase.auth.signOut();
+        throw new Error("Usuário sem permissão de administrador");
+    }
+}
 
 function redirecionar() {
     window.location.href = "/principal";
 }
 
-if (sessionStorage.getItem("usuarioLogado")) {
-    redirecionar();
-}
-
-localStorage.removeItem("usuarioLogado");
-
-async function enviarLoginComFallback(payload) {
-    try {
-        return await fetch(`${API_BASE_URL}/usuario/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-    } catch (error) {
-        throw new Error("Não foi possível conectar à API", { cause: error });
+try {
+    if (await getAdminSession()) {
+        redirecionar();
     }
+} catch (error) {
+    console.error("Não foi possível verificar a sessão:", error);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -33,20 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const Senha = document.getElementById("Senha").value;
 
         try {
-            const response = await enviarLoginComFallback({
-                email: Email,
-                senha: Senha
-            });
-
-            if (response.status === 403 || response.status === 409) {
-                throw new Error("Senha incorreta");
-            }
-            if (!response.ok) {
-                throw new Error("Erro ao fazer login: " + response.status);
-            }
+            await autenticar(Email, Senha);
 
             this.reset();
-            sessionStorage.setItem("usuarioLogado", Email);
             redirecionar();
         } catch (error) {
             console.error(error);

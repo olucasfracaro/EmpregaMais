@@ -9,7 +9,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -37,27 +39,18 @@ public class SecurityConfig {
                     "/principal.html",
                     "/cadastroCandidato.js",
                     "/loginUsuario.js",
+                    "/auth.js",
                     "/gerenciaCandidatos.js",
                     "/style.css",
                     "/style_principal.css",
+                    "/config.js",
                     "/config.local.js",
-
-                    "/candidato",
-                    "/candidato/**",
-                    "/candidatos",
-                    "/candidatos/**",
-
-                    "/usuario",
-                    "/usuario/**",
-
-                    "/analise",
-                    "/analise/**",
-                    "/analises",
-                    "/analises/**",
-
                     "/login",
                     "/principal"
                 ).permitAll()
+                .requestMatchers(HttpMethod.POST, "/candidato").permitAll()
+                .requestMatchers("/candidatos", "/candidatos/**", "/candidato/**", "/analise", "/analise/**",
+                    "/analises", "/analises/**").hasRole("ADMIN")
                 .requestMatchers(
                     "/swagger-ui.html",
                     "/swagger-ui/**"
@@ -66,9 +59,24 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form.disable())
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
             .httpBasic(Customizer.withDefaults());
 
         return http.build();
+    }
+
+    private JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            var appMetadata = jwt.getClaimAsMap("app_metadata");
+            Object role = appMetadata == null ? null : appMetadata.get("role");
+            if ("admin".equals(role)) {
+                return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            }
+            return List.of();
+        });
+        return converter;
     }
 
     @Bean

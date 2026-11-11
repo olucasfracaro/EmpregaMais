@@ -1,7 +1,5 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { API_BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { API_BASE_URL, SUPABASE_URL } from './config.js';
+import { authenticatedFetch, requireAdminSession, supabase } from './auth.js';
 
 const pdfjsLib = globalThis.pdfjsLib;
 if (pdfjsLib) {
@@ -100,12 +98,6 @@ const apiStatusIndicator = document.getElementById('apiStatusIndicator');
 const apiStatusText = document.getElementById('apiStatusText');
 
 
-const usuario = sessionStorage.getItem("usuarioLogado");
-if (!usuario) {
-    window.location.replace("/login");
-}
-
-
 function formatPhone(phoneDigits) {
     if (!phoneDigits) return '(00) 00000-0000';
     const cleaned = ('' + phoneDigits).replace(/\D/g, '');
@@ -178,7 +170,7 @@ function normalizarDados(dados) {
 
 async function receberDadosComFallback() {
     try {
-        const response = await fetch(`${API_BASE_URL}/candidatos`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/candidatos`, {
             method: "GET",
             headers: { "Content-Type": "application/json" }
         });
@@ -223,7 +215,7 @@ function salvarCandidatosNoCache(dados) {
 
 async function atualizarStatusComFallback(id, status) {
     try {
-        const response = await fetch(`${API_BASE_URL}/candidato/${id}`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/candidato/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status })
@@ -503,7 +495,7 @@ window.apagarCandidato = async function(id) {
             if (storageError) throw storageError;
         }
 
-        const response = await fetch(`${API_BASE_URL}/candidato/${id}`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/candidato/${id}`, {
             method: 'DELETE'
         });
         if (!response.ok) {
@@ -750,7 +742,7 @@ async function verificarStatusApi() {
     const timeout = setTimeout(() => controller.abort(), 8000);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/candidatos`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/candidatos`, {
             method: 'GET',
             signal: controller.signal,
             headers: { 'Content-Type': 'application/json' }
@@ -778,7 +770,14 @@ async function atualizarStatusETabela() {
 }
 
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await requireAdminSession();
+    } catch (error) {
+        console.error(error);
+        return;
+    }
+
     setupDarkMode();
     verificarStatusApi();
     setInterval(atualizarStatusETabela, 60 * 1000);
