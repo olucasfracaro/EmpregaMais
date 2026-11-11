@@ -1,5 +1,7 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { API_BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const pdfjsLib = globalThis.pdfjsLib;
 if (pdfjsLib) {
@@ -473,38 +475,70 @@ function closeModal() {
     activeCandidateId = null;
 }
 
-window.apagarCandidato = function(id) {
-    if (confirm(`Tem certeza que deseja apagar o candidato #${id}?`)) {
-        candidatos = candidatos.filter(c => c.id !== id);
-        alteracoesPendentes.delete(id);
+window.apagarCandidato = async function(id) {
+    if (!confirm(`Tem certeza que deseja apagar o candidato #${id}?`)) return;
+
+    const candidate = candidatos.find(c => String(c.id) === String(id));
+    if (!candidate) return;
+
+    try {
+        const curriculoPath = obterCaminhoStorage(candidate.curriculoPath);
+        if (curriculoPath) {
+            const { error: storageError } = await supabase.storage
+                .from('curriculos')
+                .remove([curriculoPath]);
+
+            if (storageError) throw storageError;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/candidato/${id}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error(`Erro ao excluir candidato: ${response.status}`);
+        }
+
+        candidatos = candidatos.filter(c => String(c.id) !== String(id));
+        alteracoesPendentes.delete(Number(id));
         salvarCandidatosNoCache(candidatos);
         renderTable();
         updateStats();
         showToast(`Candidato #${id} excluído com sucesso.`, 'fa-trash');
 
-        if (activeCandidateId === id) {
+        if (String(activeCandidateId) === String(id)) {
             closeModal();
         }
+    } catch (error) {
+        console.error('Não foi possível excluir o candidato e seu currículo:', error);
+        showToast('Não foi possível excluir o candidato.', 'fa-triangle-exclamation');
     }
 };
 
 
 
-function obterCurriculoUrl(caminhoOriginal) {
+function obterCaminhoStorage(caminhoOriginal) {
     if (!caminhoOriginal) return null;
 
     let caminho = String(caminhoOriginal)
         .trim()
         .replace(/^\/+/, '');
 
-   
     if (/^https?:\/\//i.test(caminho)) {
-        return caminho;
+        const url = new URL(caminho);
+        const marcador = '/storage/v1/object/public/curriculos/';
+        const indice = url.pathname.indexOf(marcador);
+        if (indice === -1) return null;
+        caminho = url.pathname.slice(indice + marcador.length);
     }
 
-    caminho = caminho
+    return decodeURIComponent(caminho)
         .replace(/^public\/curriculos\//i, '')
         .replace(/^curriculos\//i, '');
+}
+
+function obterCurriculoUrl(caminhoOriginal) {
+    const caminho = obterCaminhoStorage(caminhoOriginal);
+    if (!caminho) return null;
 
     const caminhoCodificado = caminho
         .split('/')
