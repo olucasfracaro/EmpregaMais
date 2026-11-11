@@ -1,10 +1,7 @@
 fastapi
-uvicorn
 pypdf
 pydantic
 google-generativeai
 python-dotenv
 python-multipart
 slowapi
-pytest
-httpx
