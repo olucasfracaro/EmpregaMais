@@ -37,7 +37,7 @@ public class SecurityConfig {
                     "/index.html",
                     "/login.html",
                     "/principal.html",
-                    "/cadastroCandidato.js",
+                    "/script.js",
                     "/loginUsuario.js",
                     "/auth.js",
                     "/gerenciaCandidatos.js",

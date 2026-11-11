@@ -1,49 +1,575 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastro - EmpregaMais</title>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Metroform Atendimento</title>
+  <meta name="description" content="Portal de atendimento Metroform: trabalhe conosco, solicitação de orçamento, padrão de atendimento e área do atendente.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="icon" type="image/png" href="metroform.png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="ico.png">
+  <script src="script.js" defer></script>
 </head>
 <body>
 
-  <form class="painel" id="PainelManeiro">
-    <header class="painel-header">
-      <h1>Cadastro</h1>
-    </header>
+  <!-- CABEÇALHO E NAVEGAÇÃO PRINCIPAL -->
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="#inicio" aria-label="Metroform Atendimento, início">
+        <img id="logo" src="https://metroform.com.br/wp-content/uploads/logo_horizontal_1@4x.png" alt="Metroform">
+        <span class="wordmark" id="wordmark" hidden>Metroform</span>
+        <small>Atendimento</small>
+      </a>
+      <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">Menu</button>
+      <nav class="nav" id="nav" aria-label="Principal">
+        <a href="#inicio" data-r="inicio">Início</a>
+        <a href="#trabalhe" data-r="trabalhe">Trabalhe conosco</a>
+        <a href="#orcamento" data-r="orcamento">Solicitar orçamento</a>
+        <a href="#padrao" data-r="padrao">Padrão de atendimento</a>
+        <a href="#manual" data-r="manual">Manual de conduta</a>
+        <a href="#login" data-r="login" id="navLogin">Área do atendente</a>
+      </nav>
+    </div>
+  </header>
 
-    <div class="campo-grupo">
-      <label for="Nome">Nome</label>
-      <input type="text" id="Nome" placeholder="Seu nome completo" required>
+  <main id="app">
+
+    <!-- PÁGINA: INÍCIO -->
+    <div data-page="inicio">
+      <section class="hero">
+        <div class="wrap">
+          <span class="eyebrow eyebrow-hl">Central de atendimento Metroform</span>
+          <h1>Toda pessoa que chega <span class="hl">recebe o mesmo padrão</span> de atendimento.</h1>
+          <p>Quer trabalhar na Metroform ou precisa de um orçamento para a sua obra? Escolha o seu caminho.</p>
+          <div class="doors">
+            <a class="door" href="#trabalhe">
+              <span class="k">Para candidatos</span>
+              <h3>Quero trabalhar na Metroform</h3>
+              <p class="muted">Vagas fabris e administrativas com triagem específica.</p>
+              <span class="go">Ver vagas e me candidatar</span>
+            </a>
+            <a class="door" href="#orcamento">
+              <span class="k">Para clientes</span>
+              <h3>Quero um orçamento</h3>
+              <p class="muted">Proteção coletiva, escoramento e rede de segurança.</p>
+              <span class="go">Solicitar orçamento</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <div class="head">
+            <span class="eyebrow">Nosso compromisso</span>
+            <h2>Prazos de resposta</h2>
+            <p class="lead">Contagem em horário comercial (segunda a sexta, 8h às 18h).</p>
+          </div>
+          <div class="grid g3">
+            <div class="box top-brand"><span class="num">2h</span><h3>Orçamentos</h3><p class="muted">Contato inicial do consultor técnico.</p></div>
+            <div class="box top-brand"><span class="num">48h</span><h3>Candidaturas</h3><p class="muted">Confirmação e retorno sobre seleção.</p></div>
+            <div class="box top-brand"><span class="num">100%</span><h3>Com retorno</h3><p class="muted">Resposta garantida a todos os contatos.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="band-white">
+        <div class="wrap">
+          <div class="head">
+            <span class="eyebrow">Como funciona</span>
+            <h2>Do primeiro contato ao retorno</h2>
+          </div>
+          <div class="flow">
+            <div class="st"><span class="n">1</span><b>Você envia</b><small>Formulário, WhatsApp ou e-mail</small></div>
+            <div class="st"><span class="n">2</span><b>Protocolo</b><small>Código para acompanhamento</small></div>
+            <div class="st"><span class="n">3</span><b>Triagem</b><small>Perguntas específicas</small></div>
+            <div class="st"><span class="n">4</span><b>Responsável</b><small>Recrutador ou consultor</small></div>
+            <div class="st"><span class="n">5</span><b>Retorno no prazo</b><small>2h orçamento · 48h candidatura</small></div>
+            <div class="st"><span class="n">6</span><b>Conclusão</b><small>Proposta ou feedback</small></div>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <div class="campo-grupo">
-      <label for="Telefone">Telefone</label>
-      <input type="tel" id="Telefone" placeholder="(00) 00000-0000" required>
+    <!-- PÁGINA: TRABALHE CONOSCO -->
+    <div data-page="trabalhe" hidden>
+      <section class="hero hero-sm">
+        <div class="wrap">
+          <span class="eyebrow eyebrow-hl">Trabalhe conosco</span>
+          <h1 class="h1-sm">Protegendo vidas. <span class="hl">Construindo carreiras.</span></h1>
+          <p>Triagem direcionada de acordo com o perfil e demandas da vaga.</p>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <div class="grid g2 mb-36">
+            <div class="box top-brand">
+              <span class="kicker">Área fabril e campo</span>
+              <h3>Produção, solda, montagem e logística</h3>
+              <ul>
+                <li>Trabalho em turnos ou em obras de clientes.</li>
+                <li>Foco em normas NRs (11, 12, 18, 35) e prática.</li>
+              </ul>
+            </div>
+            <div class="box top-brand">
+              <span class="kicker">Área administrativa</span>
+              <h3>RH, financeiro, comercial e suporte</h3>
+              <ul>
+                <li>Rotina presencial de escritório.</li>
+                <li>Foco em escolaridade e sistemas (Excel, ERP, CRM).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="head mb-18">
+            <span class="eyebrow">Vagas abertas</span>
+            <h2>Escolha a sua vaga</h2>
+          </div>
+          <div class="tabs" role="tablist">
+            <button class="tab" role="tab" aria-selected="true" data-area="fabril">Fabril e campo</button>
+            <button class="tab" role="tab" aria-selected="false" data-area="administrativo">Administrativo</button>
+          </div>
+          <div class="grid g4" id="vagasList"></div>
+        </div>
+      </section>
+
+      <section class="band-white" id="candidatura">
+        <div class="wrap">
+          <div class="form-wrap">
+            <div>
+              <form class="card" id="formCand" novalidate>
+                <fieldset>
+                  <legend><span>1</span> Seus dados</legend>
+                  <div class="row">
+                    <label class="f">Nome completo <span class="req">*</span><input type="text" id="c_nome" required autocomplete="name"></label>
+                    <label class="f">E-mail <span class="req">*</span><input type="email" id="c_email" required autocomplete="email"></label>
+                  </div>
+                  <div class="row">
+                    <label class="f">WhatsApp <span class="req">*</span><input type="tel" id="c_tel" required placeholder="(11) 90000-0000" autocomplete="tel"></label>
+                    <label class="f">Cidade / bairro <span class="req">*</span><input type="text" id="c_cidade" required placeholder="Ex.: Guarulhos, Centro"></label>
+                  </div>
+                </fieldset>
+
+                <fieldset>
+                  <legend><span>2</span> Vaga</legend>
+                  <div class="row">
+                    <label class="f">Área <span class="req">*</span>
+                      <select id="c_area" required>
+                        <option value="fabril">Fabril e campo</option>
+                        <option value="administrativo">Administrativo</option>
+                      </select>
+                    </label>
+                    <label class="f">Vaga <span class="req">*</span><select id="c_vaga" required></select></label>
+                  </div>
+                  <label class="f">Experiência <span class="req">*</span>
+                    <select id="c_exp" required>
+                      <option value="0">Nenhuma (primeiro emprego)</option>
+                      <option value="1">Até 1 ano</option>
+                      <option value="2">De 1 a 3 anos</option>
+                      <option value="4">De 3 a 5 anos</option>
+                      <option value="6">Mais de 5 anos</option>
+                    </select>
+                  </label>
+                </fieldset>
+
+                <fieldset id="qFabril">
+                  <legend><span>3</span> Triagem · Área Fabril</legend>
+                  <p class="group-title">Turnos disponíveis</p>
+                  <div class="checks" id="c_turnos">
+                    <label><input type="checkbox" value="1º turno"> 1º turno</label>
+                    <label><input type="checkbox" value="2º turno"> 2º turno</label>
+                    <label><input type="checkbox" value="3º turno"> 3º turno</label>
+                  </div>
+                  <p class="group-title">Certificações NR</p>
+                  <div class="checks" id="c_nrs">
+                    <label><input type="checkbox" value="NR-11"> NR-11</label>
+                    <label><input type="checkbox" value="NR-12"> NR-12</label>
+                    <label><input type="checkbox" value="NR-18"> NR-18</label>
+                    <label><input type="checkbox" value="NR-35"> NR-35</label>
+                  </div>
+                  <p class="group-title">Habilidades práticas</p>
+                  <div class="checks" id="c_hab">
+                    <label><input type="checkbox" value="Solda MIG/MAG"> Solda MIG/MAG</label>
+                    <label><input type="checkbox" value="Leitura de desenho técnico"> Desenho técnico</label>
+                    <label><input type="checkbox" value="Empilhadeira"> Empilhadeira</label>
+                    <label><input type="checkbox" value="Ferramentas manuais e elétricas"> Ferramentas manuais</label>
+                    <label><input type="checkbox" value="Montagem em obra"> Montagem em obra</label>
+                  </div>
+                  <div class="row">
+                    <label class="f">Locomoção
+                      <select id="c_transp">
+                        <option value="sim">Transporte próprio / mora perto</option>
+                        <option value="fretado">Depende de fretado ou VT</option>
+                        <option value="nao">Possui dificuldade</option>
+                      </select>
+                    </label>
+                    <label class="f">Disponível para obras?
+                      <select id="c_campo"><option value="sim">Sim</option><option value="nao">Não</option></select>
+                    </label>
+                  </div>
+                </fieldset>
+
+                <fieldset id="qAdm" hidden>
+                  <legend><span>3</span> Triagem · Área Administrativa</legend>
+                  <label class="f">Escolaridade
+                    <select id="c_esc">
+                      <option value="1">Ensino Médio</option>
+                      <option value="2">Técnico</option>
+                      <option value="3">Superior Cursando</option>
+                      <option value="4">Superior Completo</option>
+                      <option value="5">Pós-Graduação</option>
+                    </select>
+                  </label>
+                  <label class="f">Curso / Formação<input type="text" id="c_curso" placeholder="Ex.: Administração"></label>
+                  <p class="group-title">Sistemas e ferramentas</p>
+                  <div class="checks" id="c_ferr">
+                    <label><input type="checkbox" value="Excel"> Excel Avançado</label>
+                    <label><input type="checkbox" value="ERP"> ERP (TOTVS/SAP)</label>
+                    <label><input type="checkbox" value="CRM"> CRM</label>
+                    <label><input type="checkbox" value="ATS"> ATS (Recrutamento)</label>
+                    <label><input type="checkbox" value="Power BI"> Power BI</label>
+                  </div>
+                  <div class="row">
+                    <label class="f">Trabalho Presencial
+                      <select id="c_pres"><option value="sim">Sim</option><option value="nao">Não</option></select>
+                    </label>
+                    <label class="f">LinkedIn<input type="url" id="c_linkedin" placeholder="https://..."></label>
+                  </div>
+                </fieldset>
+
+                <fieldset>
+                  <legend><span>4</span> Motivação</legend>
+                  <label class="f">Por que quer trabalhar conosco?<textarea id="c_porque" placeholder="Breve resumo..."></textarea></label>
+                  <label class="consent"><input type="checkbox" id="c_lgpd"> Autorizo o uso dos meus dados para a vaga e banco de talentos (LGPD).</label>
+                </fieldset>
+
+                <p class="err" id="c_err" hidden></p>
+                <button class="btn" type="submit">Enviar candidatura</button>
+              </form>
+              <div class="done" id="c_done" hidden></div>
+            </div>
+
+            <aside class="side">
+              <div class="box top-brand" id="vagaInfo"></div>
+              <div class="box">
+                <span class="kicker">Próximas etapas</span>
+                <ul>
+                  <li>Geração imediata de protocolo.</li>
+                  <li>Avaliação inicial em até 48h úteis.</li>
+                  <li>Notificação enviada em todos os casos.</li>
+                </ul>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <div class="campo-grupo">
-      <label for="Email">E-mail</label>
-      <input type="email" id="Email" placeholder="seu@email.com" required>
+    <!-- PÁGINA: ORÇAMENTO -->
+    <div data-page="orcamento" hidden>
+      <section class="hero hero-sm">
+        <div class="wrap">
+          <span class="eyebrow eyebrow-hl">Solicitar orçamento</span>
+          <h1 class="h1-sm">Segurança na obra <span class="hl">com planejamento.</span></h1>
+          <p>Informe as especificações do seu projeto para obter um orçamento assertivo.</p>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <div class="form-wrap">
+            <div>
+              <form class="card" id="formOrc" novalidate>
+                <fieldset>
+                  <legend><span>1</span> Contato</legend>
+                  <div class="row">
+                    <label class="f">Nome completo <span class="req">*</span><input type="text" id="o_nome" required autocomplete="name"></label>
+                    <label class="f">Cargo<input type="text" id="o_cargo" placeholder="Ex.: Engenheiro"></label>
+                  </div>
+                  <div class="row">
+                    <label class="f">Empresa / Construtora <span class="req">*</span><input type="text" id="o_empresa" required autocomplete="organization"></label>
+                    <label class="f">E-mail <span class="req">*</span><input type="email" id="o_email" required autocomplete="email"></label>
+                  </div>
+                  <div class="row">
+                    <label class="f">Celular / WhatsApp <span class="req">*</span><input type="tel" id="o_tel" required placeholder="(11) 90000-0000" autocomplete="tel"></label>
+                    <label class="f">Horário para contato
+                      <select id="o_horario"><option>Manhã</option><option>Tarde</option><option>Qualquer horário</option></select>
+                    </label>
+                  </div>
+                </fieldset>
+
+                <fieldset>
+                  <legend><span>2</span> A Obra</legend>
+                  <div class="row">
+                    <label class="f">Cidade / UF <span class="req">*</span><input type="text" id="o_cidade" required placeholder="Ex.: São Paulo - SP"></label>
+                    <label class="f">Tipo de obra
+                      <select id="o_tipo"><option>Residencial vertical</option><option>Comercial / corporativa</option><option>Industrial / galpão</option><option>Infraestrutura</option><option>Outro</option></select>
+                    </label>
+                  </div>
+                  <div class="row">
+                    <label class="f">Fase atual
+                      <select id="o_fase"><option>Projeto / planejamento</option><option>Fundação</option><option>Estrutura</option><option>Alvenaria / fachada</option><option>Acabamento</option></select>
+                    </label>
+                    <label class="f">Nº de Pavimentos<input type="number" id="o_pav" min="1" max="200" placeholder="18"></label>
+                  </div>
+                  <p class="group-title">Soluções requeridas <span class="req">*</span></p>
+                  <div class="checks" id="o_linhas">
+                    <label><input type="checkbox" value="Proteção coletiva metálica"> Proteção coletiva metálica</label>
+                    <label><input type="checkbox" value="Escoramento e acessos"> Escoramento e acessos</label>
+                    <label><input type="checkbox" value="Rede de segurança"> Rede de segurança</label>
+                    <label><input type="checkbox" value="Linha de vida"> Linha de vida</label>
+                  </div>
+                  <label class="f">Prazo de necessidade
+                    <select id="o_prazo"><option value="urgente">Urgente (até 15 dias)</option><option value="30">Em até 30 dias</option><option value="90">1 a 3 meses</option><option value="cotacao">Cotação inicial</option></select>
+                  </label>
+                  <label class="f">Observações gerais<textarea id="o_msg" placeholder="Dimensões, detalhes operacionais..."></textarea></label>
+                  <label class="consent"><input type="checkbox" id="o_lgpd"> Autorizo o contato comercial (LGPD).</label>
+                </fieldset>
+
+                <p class="err" id="o_err" hidden></p>
+                <button class="btn" type="submit">Solicitar orçamento</button>
+              </form>
+              <div class="done" id="o_done" hidden></div>
+            </div>
+
+            <aside class="side">
+              <div class="box top-brand">
+                <span class="kicker">Soluções em proteção</span>
+                <ul>
+                  <li>Proteção coletiva metálica</li>
+                  <li>Escoramentos e acessos</li>
+                  <li>Redes de segurança</li>
+                  <li>Linhas de vida</li>
+                </ul>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <div class="campo-grupo">
-      <label for="Mensagem">Mensagem</label>
-      <textarea id="Mensagem" placeholder="Escreva sua mensagem aqui..." required></textarea>
+    <!-- PÁGINA: PADRÃO DE ATENDIMENTO -->
+    <div data-page="padrao" hidden>
+      <section class="hero hero-sm">
+        <div class="wrap">
+          <span class="eyebrow eyebrow-hl">Padrão de atendimento</span>
+          <h1 class="h1-sm">Metodologia unificada de atendimento.</h1>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <div class="head"><h2>As 6 etapas de todo atendimento</h2></div>
+          <div class="scroll">
+            <table class="t wide">
+              <thead><tr><th>Etapa</th><th>Ação</th><th>Candidato</th><th>Cliente</th></tr></thead>
+              <tbody>
+                <tr><td><b>1. Recepção</b></td><td>Saudação padrão e identificação.</td><td>Até 48h úteis</td><td>Até 2h úteis</td></tr>
+                <tr><td><b>2. Registro</b></td><td>Entrada no sistema e geração de protocolo.</td><td>Protocolo MF-C</td><td>Protocolo MF-O</td></tr>
+                <tr><td><b>3. Triagem</b></td><td>Coleta dos dados específicos do formulário.</td><td>Requisitos da vaga</td><td>Projeto e prazos</td></tr>
+                <tr><td><b>4. Encaminhamento</b></td><td>Transferência para a área responsável.</td><td>Recrutamento</td><td>Consultor técnico</td></tr>
+                <tr><td><b>5. Follow-up</b></td><td>Contatos periódicos em 1, 3 e 7 dias.</td><td>Andamento da vaga</td><td>Proposta / Visita</td></tr>
+                <tr><td><b>6. Conclusão</b></td><td>Fechamento do protocolo com status final.</td><td>Aprovado / Banco</td><td>Fechado / Perdido</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="band-white">
+        <div class="wrap">
+          <div class="head"><h2>Status padronizados</h2></div>
+          <div class="grid g2">
+            <div class="box"><span class="kicker">Candidatos</span><div class="chips" id="stCand"></div></div>
+            <div class="box"><span class="kicker">Orçamentos</span><div class="chips" id="stOrc"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <div class="head"><h2>Roteiros operacionais</h2></div>
+          <div class="tabs" role="tablist" id="scriptTabs">
+            <button class="tab" role="tab" aria-selected="true" data-s="cand">Candidatos</button>
+            <button class="tab" role="tab" aria-selected="false" data-s="orc">Orçamentos</button>
+          </div>
+          <div class="grid g2" id="scriptList"></div>
+        </div>
+      </section>
     </div>
 
-    <div class="campo-grupo">
-      <label for="Currículo">Currículo em PDF ou imagem</label>
-        <input type="file" id="Currículo" name="Currículo" accept="application/pdf,image/*" required>
+    <!-- PÁGINA: MANUAL DE CONDUTA -->
+    <div data-page="manual" hidden>
+      <section class="hero hero-sm">
+        <div class="wrap">
+          <span class="eyebrow eyebrow-hl">Manual de conduta</span>
+          <h1 class="h1-sm">Diretrizes operacionais e de conduta.</h1>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <nav class="toc mb-28" aria-label="Sumário do manual">
+            <a href="#m1" data-scroll>1. Princípios</a>
+            <a href="#m2" data-scroll>2. Linguagem</a>
+            <a href="#m3" data-scroll>3. Canais</a>
+            <a href="#m4" data-scroll>4. Recrutamento</a>
+            <a href="#m5" data-scroll>5. Vendas</a>
+            <a href="#m6" data-scroll>6. Resolução</a>
+            <a href="#m7" data-scroll>7. LGPD</a>
+            <a href="#m8" data-scroll>8. Boas Práticas</a>
+          </nav>
+
+          <div class="box p-art">
+            <div class="art" id="m1"><span class="an">Art. 1</span><div class="ab"><h3>Princípios</h3><ul><li>Respeito, clareza, agilidade, registro e retorno garantido a todos.</li></ul></div></div>
+            <div class="art" id="m2"><span class="an">Art. 2</span><div class="ab"><h3>Linguagem</h3><ul><li>Comunicação formal, clara, sem gírias ou mensagens de áudio não solicitadas.</li></ul></div></div>
+            <div class="art" id="m3"><span class="an">Art. 3</span><div class="ab"><h3>Canais Oficiais</h3><ul><li>Uso exclusivo do sistema e canais corporativos autorizados.</li></ul></div></div>
+            <div class="art" id="m4"><span class="an">Art. 4</span><div class="ab"><h3>Recrutamento Imparcial</h3><ul><li>Avaliação estritamente técnica baseada nos pré-requisitos cadastrados.</li></ul></div></div>
+            <div class="art" id="m5"><span class="an">Art. 5</span><div class="ab"><h3>Atendimento Comercial</h3><ul><li>Levantamento técnico prévio antes de qualquer orçamentação.</li></ul></div></div>
+            <div class="art" id="m6"><span class="an">Art. 6</span><div class="ab"><h3>Gestão de Conflitos</h3><ul><li>Manutenção da cordialidade e encaminhamento imediato de exceções.</li></ul></div></div>
+            <div class="art" id="m7"><span class="an">Art. 7</span><div class="ab"><h3>Proteção de Dados (LGPD)</h3><ul><li>Tratamento restrito aos dados necessários para cada atendimento.</li></ul></div></div>
+            <div class="art" id="m8"><span class="an">Art. 8</span><div class="ab"><h3>Diretrizes Operacionais</h3>
+              <div class="dodont">
+                <div class="box do"><span class="kicker">Recomendado</span><ul><li>Respeitar prazos.</li><li>Registrar atualizações.</li><li>Utilizar scripts.</li></ul></div>
+                <div class="box dont"><span class="kicker">Proibido</span><ul><li>Passar valores sem orçamento técnico.</li><li>Ignorar pendências.</li></ul></div>
+              </div>
+            </div></div>
+          </div>
+
+          <div class="ciencia mt-24">
+            <h3>Termo de Aceite</h3>
+            <label><input type="checkbox" id="m_ok"> Declaro ter lido e compreendido o Manual de Conduta de Atendimento.</label>
+            <p id="m_status" class="font-bold"></p>
+          </div>
+        </div>
+      </section>
     </div>
-    
-    <button type="submit" class="btn-cadastrar">Enviar</button>
 
-  </form>
+    <!-- PÁGINA: LOGIN -->
+    <div data-page="login" hidden>
+      <div class="login-wrap">
+        <div class="login-art">
+          <span class="eyebrow eyebrow-hl">Área do atendente</span>
+          <h2>Painel Interno <span class="hl">Metroform</span></h2>
+        </div>
+        <div class="login-form">
+          <form class="card" id="formLogin" novalidate>
+            <div><h3>Acesso Corporativo</h3></div>
+            <label class="f">E-mail<input type="email" id="l_email" autocomplete="username"></label>
+            <label class="f">Senha<input type="password" id="l_senha" autocomplete="current-password"></label>
+            <p class="err" id="l_err" hidden></p>
+            <button class="btn" type="submit">Entrar</button>
+            <button class="btn ghost" type="button" id="l_demo">Modo Demonstração</button>
+          </form>
+        </div>
+      </div>
+    </div>
 
-  <script type="module" src="cadastroCandidato.js"></script>
+    <!-- PÁGINA: PAINEL -->
+    <div data-page="painel" hidden>
+      <div class="pbar">
+        <div class="wrap">
+          <h2>Painel de Gestão</h2>
+          <div class="who">
+            <span class="avatar" id="p_av">A</span>
+            <span><b id="p_nome" class="txt-on-dark">Atendente</b><br><span id="p_cargo">RH</span></span>
+            <button class="btn sm ghost btn-on-dark" id="p_sair">Sair</button>
+          </div>
+        </div>
+      </div>
 
+      <div class="wrap">
+        <p class="demo-note mt-18" id="p_manual_warn" hidden>Aceite pendente no <a href="#manual">Manual de Conduta</a>.</p>
+        
+        <div class="kpis">
+          <div class="kpi"><span>Em aberto</span><strong id="k_abertos">0</strong></div>
+          <div class="kpi alert"><span>Prazo Vencido</span><strong id="k_atraso">0</strong></div>
+          <div class="kpi"><span>Novos Hoje</span><strong id="k_hoje">0</strong></div>
+          <div class="kpi"><span>Concluídos</span><strong id="k_concl">0</strong></div>
+        </div>
+
+        <div class="toolbar">
+          <select id="f_tipo" aria-label="Filtrar por tipo">
+            <option value="">Todos os Tipos</option>
+            <option value="candidato">Candidatos</option>
+            <option value="orcamento">Orçamentos</option>
+          </select>
+          <select id="f_status" aria-label="Filtrar por situação">
+            <option value="abertos">Em Aberto</option>
+            <option value="atraso">Prazo Vencido</option>
+            <option value="todos">Todos</option>
+            <option value="concluidos">Concluídos</option>
+          </select>
+          <input type="text" id="f_busca" placeholder="Buscar por protocolo, nome..." aria-label="Buscar">
+          <button class="btn sm dark" id="p_novo">+ Registrar Contato</button>
+        </div>
+
+        <div class="ws">
+          <div class="scroll">
+            <table class="t queue wide">
+              <thead>
+                <tr>
+                  <th>Protocolo</th>
+                  <th>Tipo</th>
+                  <th>Nome</th>
+                  <th>Assunto</th>
+                  <th>Aderência</th>
+                  <th>Status</th>
+                  <th>SLA</th>
+                </tr>
+              </thead>
+              <tbody id="q_body"></tbody>
+            </table>
+            <div class="empty" id="q_empty" hidden>Nenhum registro encontrado.</div>
+          </div>
+          <aside class="detail" id="detail">
+            <div class="empty">Selecione um item da fila para carregar os detalhes.</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <!-- PÁGINA: REGISTRO MANUAL DE CONTATO -->
+    <div data-page="novo" hidden>
+      <section>
+        <div class="wrap max-w-720">
+          <form class="card" id="formNovo" novalidate>
+            <div>
+              <span class="eyebrow">Novo Atendimento</span>
+              <h2 class="mt-8">Registrar Contato Manual</h2>
+            </div>
+            <div class="row">
+              <label class="f">Tipo<select id="n_tipo"><option value="candidato">Candidato</option><option value="orcamento">Orçamento</option></select></label>
+              <label class="f">Canal de Origem<select id="n_canal"><option>WhatsApp</option><option>Telefone</option><option>E-mail</option><option>Instagram</option><option>Presencial</option></select></label>
+            </div>
+            <div class="row">
+              <label class="f">Nome <span class="req">*</span><input type="text" id="n_nome"></label>
+              <label class="f">Contato <span class="req">*</span><input type="text" id="n_contato"></label>
+            </div>
+            <label class="f" id="n_vaga_wrap">Assunto / Vaga<input type="text" id="n_assunto" placeholder="Ex.: Soldador ou Proteção Coletiva"></label>
+            <label class="f">Resumo<textarea id="n_resumo"></textarea></label>
+            <p class="err" id="n_err" hidden></p>
+            <div class="flex-gap-10">
+              <button class="btn" type="submit">Salvar Registro</button>
+              <a class="btn ghost" href="#painel">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span><b>Metroform · Central de Atendimento</b><br>Proteção e engenharia para a construção civil.</span>
+      <span>Projeto Recrutamento Assertivo · 2026</span>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" hidden role="status"></div>
 </body>
 </html>
