@@ -6,15 +6,25 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 async function uploadCurriculo(file) {
     if (!file) return "";
 
-    const dateStamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const isPdf = file.type === "application/pdf";
+    const isImage = file.type.startsWith("image/");
+    if (!isPdf && !isImage) {
+        throw new Error("Envie um currículo em PDF ou imagem.");
+    }
 
-    const fileName = `${dateStamp}_${Math.random().toString(36).substring(2, 8)}.pdf`;
+    const dateStamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const originalExtension = file.name.includes(".")
+        ? file.name.split(".").pop().toLowerCase().replace(/[^a-z0-9]/g, "")
+        : "img";
+    const extension = originalExtension || "img";
+    const fileName = `${dateStamp}_${Math.random().toString(36).substring(2, 8)}.${extension}`;
 
     const { data: uploadData, error } = await supabase.storage
         .from("curriculos")
         .upload(fileName, file, {
             cacheControl: "3600",
-            upsert: false
+            upsert: false,
+            contentType: file.type
         });
 
     if (error) {

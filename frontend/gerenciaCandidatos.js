@@ -522,6 +522,10 @@ function formatarTamanhoArquivo(bytes) {
     return `${tamanho.toFixed(tamanho >= 10 ? 1 : 2)} ${unidades[unidade]}`;
 }
 
+function curriculoEhImagem(caminho) {
+    return /\.(avif|bmp|gif|heic|heif|jpe?g|png|svg|tiff?|webp)$/i.test(caminho || '');
+}
+
 async function atualizarTamanhoCurriculo(candidate) {
     const fileUrl = obterCurriculoUrl(candidate.curriculoPath);
     if (!fileUrl) return;
@@ -579,13 +583,21 @@ window.simulatePdfAction = function(action) {
 
             curriculumPreview.replaceChildren();
 
-            const iframe = document.createElement('iframe');
-            iframe.src = fileUrl;
-            iframe.title = `Currículo de ${candidate.nome}`;
-            iframe.style.cssText =
-                'width:100%;height:80vh;border:none;border-radius:8px;';
-
-            curriculumPreview.appendChild(iframe);
+            if (curriculoEhImagem(candidate.curriculoPath)) {
+                const image = document.createElement('img');
+                image.src = fileUrl;
+                image.alt = `Currículo de ${candidate.nome}`;
+                image.style.cssText =
+                    'display:block;max-width:100%;max-height:80vh;margin:auto;border-radius:8px;object-fit:contain;';
+                curriculumPreview.appendChild(image);
+            } else {
+                const iframe = document.createElement('iframe');
+                iframe.src = fileUrl;
+                iframe.title = `Currículo de ${candidate.nome}`;
+                iframe.style.cssText =
+                    'width:100%;height:80vh;border:none;border-radius:8px;';
+                curriculumPreview.appendChild(iframe);
+            }
 
             curriculumModal.hidden = false;
             document.body.classList.add('modal-open');
@@ -610,10 +622,8 @@ window.simulatePdfAction = function(action) {
                 const nomeArquivo = candidate.curriculoPath
                     .split('/')
                     .pop()
-                    ?.replace(/_+$/, '') || 'curriculo.pdf';
-                link.download = nomeArquivo.toLowerCase().endsWith('.pdf')
-                    ? nomeArquivo
-                    : `${nomeArquivo}.pdf`;
+                    ?.replace(/_+$/, '') || 'curriculo';
+                link.download = nomeArquivo;
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
