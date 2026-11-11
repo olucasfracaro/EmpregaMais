@@ -136,6 +136,16 @@ function normalizarStatus(status) {
     return st;
 }
 
+function formatarDataEnvio(data) {
+    if (!data) return 'Data indisponível';
+
+    const dataTexto = String(data);
+    const dataIso = dataTexto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (dataIso) return `${dataIso[3]}/${dataIso[2]}/${dataIso[1]}`;
+
+    return dataTexto;
+}
+
 function normalizarDados(dados) {
     return dados.map(item => ({
         id: item.id,
@@ -147,7 +157,7 @@ function normalizarDados(dados) {
         status: normalizarStatus(item.status),
         curriculoPath: item.curriculo_path || item.curriculoPath || item.curriculo || item.pdfName || '',
         pdfSize: item.pdfSize || '',
-        dataEnvio: item.dataEnvio || '10/10/2026'
+        dataEnvio: formatarDataEnvio(item.createdAt || item.created_at || item.dataEnvio)
     }));
 }
 
