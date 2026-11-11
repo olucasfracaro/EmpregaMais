@@ -48,6 +48,7 @@ const mockData = [
 
 let candidatos = [];
 const alteracoesPendentes = new Map();
+const exclusoesPendentes = new Map();
 const curriculoBaseUrl = 'https://kampbrxrosxtspcmgewr.supabase.co/storage/v1/object/public/curriculos/';
 const candidatosCacheKey = 'candidatosCache-v2';
 const candidatosCacheTtl = 5 * 60 * 1000;
@@ -213,6 +214,31 @@ function salvarCandidatosNoCache(dados) {
     }
 }
 
+function temAlteracoesPendentes() {
+    return alteracoesPendentes.size > 0 || exclusoesPendentes.size > 0;
+}
+
+function atualizarBotaoConfirmacao() {
+    if (!confirmChangesButton) return;
+
+    const totalPendencias = alteracoesPendentes.size + exclusoesPendentes.size;
+    confirmChangesButton.disabled = totalPendencias === 0;
+    confirmChangesButton.innerHTML = totalPendencias > 0
+        ? `<i class="fa-solid fa-check"></i> Confirmar alterações (${totalPendencias})`
+        : '<i class="fa-solid fa-check"></i> Confirmar alterações';
+}
+
+function confirmarSaidaSemSalvar() {
+    return !temAlteracoesPendentes()
+        || window.confirm('Existem alterações não salvas. Deseja sair sem salvar?');
+}
+
+function descartarAlteracoesPendentes() {
+    alteracoesPendentes.clear();
+    exclusoesPendentes.clear();
+    atualizarBotaoConfirmacao();
+}
+
 async function atualizarStatusComFallback(id, status) {
     try {
         const response = await authenticatedFetch(`${API_BASE_URL}/candidato/${id}`, {
@@ -231,7 +257,7 @@ async function atualizarStatusComFallback(id, status) {
 }
 
 async function confirmarAlteracoes() {
-    if (alteracoesPendentes.size === 0) {
+    if (!temAlteracoesPendentes()) {
         showToast('Nenhuma alteração pendente para salvar.', 'fa-circle-info');
         return;
     }
@@ -243,28 +269,36 @@ async function confirmarAlteracoes() {
 
     try {
         for (const [id, alteracao] of alteracoesPendentes) {
-            try {
-                await atualizarStatusComFallback(id, alteracao.status);
-            } catch (err) {
-                console.warn(`Simulando persistência local para candidato #${id}`);
-            }
-            const item = candidatos.find(c => c.id === id);
-            if (item) {
-                item.status = alteracao.status;
-            }
+            await atualizarStatusComFallback(id, alteracao.status);
             alteracoesPendentes.delete(id);
+        }
+
+        for (const [id, candidate] of exclusoesPendentes) {
+            const curriculoPath = obterCaminhoStorage(candidate.curriculoPath);
+            if (curriculoPath) {
+                const { error: storageError } = await supabase.storage
+                    .from('curriculos')
+                    .remove([curriculoPath]);
+
+                if (storageError) throw storageError;
+            }
+
+            const response = await authenticatedFetch(`${API_BASE_URL}/candidato/${id}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) {
+                throw new Error(`Erro ao excluir candidato ${id}: ${response.status}`);
+            }
+            exclusoesPendentes.delete(id);
         }
 
         salvarCandidatosNoCache(candidatos);
         showToast('Alterações salvas com sucesso!', 'fa-circle-check');
     } catch (error) {
         console.error('Não foi possível salvar as alterações:', error);
-        showToast('Erro ao salvar alterações.', 'fa-triangle-exclamation');
+        showToast('Não foi possível salvar todas as alterações. Tente novamente.', 'fa-triangle-exclamation');
     } finally {
-        if (confirmChangesButton) {
-            confirmChangesButton.disabled = false;
-            confirmChangesButton.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar alterações';
-        }
+        atualizarBotaoConfirmacao();
     }
 }
 
@@ -282,6 +316,7 @@ async function carregarDadosIniciais() {
 
     candidatos = normalizarDados(dados);
     salvarCandidatosNoCache(candidatos);
+    atualizarBotaoConfirmacao();
     renderTable();
     updateStats();
 }
@@ -425,7 +460,7 @@ window.handleTableStatusChange = function(selectElem, id) {
         }
 
         updateStats();
-        salvarCandidatosNoCache(candidatos);
+        atualizarBotaoConfirmacao();
         showToast(`Status do ID #${id} alterado para [${newStatus}]`);
     }
 };
@@ -485,36 +520,16 @@ window.apagarCandidato = async function(id) {
     const candidate = candidatos.find(c => String(c.id) === String(id));
     if (!candidate) return;
 
-    try {
-        const curriculoPath = obterCaminhoStorage(candidate.curriculoPath);
-        if (curriculoPath) {
-            const { error: storageError } = await supabase.storage
-                .from('curriculos')
-                .remove([curriculoPath]);
+    candidatos = candidatos.filter(c => String(c.id) !== String(id));
+    alteracoesPendentes.delete(Number(id));
+    exclusoesPendentes.set(Number(id), candidate);
+    renderTable();
+    updateStats();
+    atualizarBotaoConfirmacao();
+    showToast(`Candidato #${id} marcado para exclusão. Confirme para salvar.`, 'fa-trash');
 
-            if (storageError) throw storageError;
-        }
-
-        const response = await authenticatedFetch(`${API_BASE_URL}/candidato/${id}`, {
-            method: 'DELETE'
-        });
-        if (!response.ok) {
-            throw new Error(`Erro ao excluir candidato: ${response.status}`);
-        }
-
-        candidatos = candidatos.filter(c => String(c.id) !== String(id));
-        alteracoesPendentes.delete(Number(id));
-        salvarCandidatosNoCache(candidatos);
-        renderTable();
-        updateStats();
-        showToast(`Candidato #${id} excluído com sucesso.`, 'fa-trash');
-
-        if (String(activeCandidateId) === String(id)) {
-            closeModal();
-        }
-    } catch (error) {
-        console.error('Não foi possível excluir o candidato e seu currículo:', error);
-        showToast('Não foi possível excluir o candidato.', 'fa-triangle-exclamation');
+    if (String(activeCandidateId) === String(id)) {
+        closeModal();
     }
 };
 
@@ -594,7 +609,6 @@ async function atualizarTamanhoCurriculo(candidate) {
         if (!tamanho) return;
 
         candidate.pdfSize = tamanho;
-        salvarCandidatosNoCache(candidatos);
         if (activeCandidateId === candidate.id && modalPdfMeta) {
             modalPdfMeta.textContent = `Tamanho: ${tamanho} • Enviado em ${candidate.dataEnvio}`;
         }
@@ -764,6 +778,11 @@ async function verificarStatusApi() {
 }
 
 async function atualizarStatusETabela() {
+    if (temAlteracoesPendentes()) {
+        showToast('Confirme ou descarte as alterações antes de atualizar.', 'fa-triangle-exclamation');
+        return;
+    }
+
     await verificarStatusApi();
     localStorage.removeItem(candidatosCacheKey);
     await carregarDadosIniciais();
@@ -791,6 +810,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (refreshCandidatesButton) {
         refreshCandidatesButton.addEventListener('click', () => {
+            if (!confirmarSaidaSemSalvar()) return;
+            descartarAlteracoesPendentes();
             atualizarStatusETabela();
             showToast('Dados atualizados com sucesso!', 'fa-rotate-right');
         });
@@ -845,4 +866,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (activeCandidateId) window.apagarCandidato(activeCandidateId);
         });
     }
+
+    window.addEventListener('beforeunload', (event) => {
+        if (!temAlteracoesPendentes()) return;
+        event.preventDefault();
+        event.returnValue = '';
+    });
 });
