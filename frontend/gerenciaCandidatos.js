@@ -17,7 +17,7 @@ const mockData = [
         telefone: '11999999999',
         email: 'joao.silva@email.com',
         mensagem: 'Olá, estou muito interessado na oportunidade.',
-        status: 'CON',
+        status: 'CONCLUÍDO',
         curriculoPath: 'curriculo_joao_silva.pdf',
         pdfSize: '1.5 MB',
         dataEnvio: '10/10/2026'
@@ -29,7 +29,7 @@ const mockData = [
         telefone: '21888888888',
         email: 'maria.oliveira@email.com',
         mensagem: 'Gostaria de mais informações sobre o processo seletivo.',
-        status: 'PEN',
+        status: 'PENDENTE',
         curriculoPath: 'curriculo_maria_oliveira.pdf',
         pdfSize: '2.1 MB',
         dataEnvio: '11/10/2026'
@@ -41,7 +41,7 @@ const mockData = [
         telefone: '31777777777',
         email: 'pedro.santos@email.com',
         mensagem: 'Estou disponível para uma entrevista imediata.',
-        status: 'NÃO',
+        status: 'RECUSADO',
         curriculoPath: 'curriculo_pedro_santos.pdf',
         pdfSize: '1.2 MB',
         dataEnvio: '12/10/2026'
@@ -92,9 +92,9 @@ const modalDeleteBtn = document.getElementById('modalDeleteBtn');
 const toastContainer = document.getElementById('toastContainer');
 
 const statTotalVal = document.getElementById('statTotalVal');
-const statConVal = document.getElementById('statConVal');
-const statPenVal = document.getElementById('statPenVal');
-const statNaoVal = document.getElementById('statNaoVal');
+const statConcluidoVal = document.getElementById('statConcluidoVal');
+const statPendenteVal = document.getElementById('statPendenteVal');
+const statRecusadoVal = document.getElementById('statRecusadoVal');
 const darkModeToggle = document.getElementById('darkModeToggle');
 const apiStatusIndicator = document.getElementById('apiStatusIndicator');
 const apiStatusText = document.getElementById('apiStatusText');
@@ -130,12 +130,24 @@ function getInitials(name) {
 }
 
 function normalizarStatus(status) {
-    if (!status) return 'PEN';
+    if (!status) return 'PENDENTE';
     const st = String(status).toUpperCase();
-    if (st === 'CONTRATADO' || st === 'CONCLUÍDO') return 'CON';
-    if (st === 'PENDENTE') return 'PEN';
-    if (st === 'RECUSADO' || st === 'NÃO') return 'NÃO';
+    if (st === 'CONTRATADO' || st === 'CONCLUÍDO') return 'CONCLUÍDO';
+    if (st === 'PENDENTE') return 'PENDENTE';
+    if (st === 'RECUSADO') return 'RECUSADO';
+    if (st.length <= 3) {
+        if (st.startsWith('C')) return 'CONCLUÍDO';
+        if (st.startsWith('P')) return 'PENDENTE';
+        if (st.startsWith('N') || st.startsWith('R')) return 'RECUSADO';
+    }
     return st;
+}
+
+function classeStatus(status) {
+    return `status-${status
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()}`;
 }
 
 function formatarDataEnvio(data) {
@@ -335,14 +347,14 @@ function atualizarIndicadoresOrdenacao() {
 
 function updateStats() {
     const total = candidatos.length;
-    const con = candidatos.filter(c => c.status === 'CON').length;
-    const pen = candidatos.filter(c => c.status === 'PEN').length;
-    const nao = candidatos.filter(c => c.status === 'NÃO').length;
+    const concluido = candidatos.filter(c => c.status === 'CONCLUÍDO').length;
+    const pendente = candidatos.filter(c => c.status === 'PENDENTE').length;
+    const recusado = candidatos.filter(c => c.status === 'RECUSADO').length;
 
     if (statTotalVal) statTotalVal.textContent = total;
-    if (statConVal) statConVal.textContent = con;
-    if (statPenVal) statPenVal.textContent = pen;
-    if (statNaoVal) statNaoVal.textContent = nao;
+    if (statConcluidoVal) statConcluidoVal.textContent = concluido;
+    if (statPendenteVal) statPendenteVal.textContent = pendente;
+    if (statRecusadoVal) statRecusadoVal.textContent = recusado;
 }
 
 function renderTable() {
@@ -384,12 +396,12 @@ function renderTable() {
             <td style="color: var(--text-secondary);">${sanitizeEmail(item.email)}</td>
             <td>
                 <select
-                    class="status-select status-${item.status.toLowerCase()}"
+                    class="status-select ${classeStatus(item.status)}"
                     onchange="window.handleTableStatusChange(this, ${item.id})"
                 >
-                    <option value="CON" ${item.status === 'CON' ? 'selected' : ''}>CON</option>
-                    <option value="PEN" ${item.status === 'PEN' ? 'selected' : ''}>PEN</option>
-                    <option value="NÃO" ${item.status === 'NÃO' ? 'selected' : ''}>NÃO</option>
+                    <option value="CONCLUÍDO" ${item.status === 'CONCLUÍDO' ? 'selected' : ''}>CONCLUÍDO</option>
+                    <option value="PENDENTE" ${item.status === 'PENDENTE' ? 'selected' : ''}>PENDENTE</option>
+                    <option value="RECUSADO" ${item.status === 'RECUSADO' ? 'selected' : ''}>RECUSADO</option>
                 </select>
             </td>
             <td class="actions-cell">
@@ -413,11 +425,11 @@ window.handleTableStatusChange = function(selectElem, id) {
     if (item) {
         item.status = newStatus;
         alteracoesPendentes.set(id, { status: newStatus });
-        selectElem.className = `status-select status-${newStatus.toLowerCase()}`;
+        selectElem.className = `status-select ${classeStatus(newStatus)}`;
        
         if (activeCandidateId === id && modalStatusSelect) {
             modalStatusSelect.value = newStatus;
-            modalStatusSelect.className = `status-select status-${newStatus.toLowerCase()}`;
+            modalStatusSelect.className = `status-select ${classeStatus(newStatus)}`;
         }
 
         updateStats();
