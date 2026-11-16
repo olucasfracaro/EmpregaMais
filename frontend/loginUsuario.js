@@ -20,18 +20,9 @@ function redirecionar() {
     window.location.href = "/principal";
 }
 
-try {
-    if (await getAdminSession()) {
-        redirecionar();
-    }
-} catch (error) {
-    console.error("Não foi possível verificar a sessão:", error);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("PainelNookie");
-    if (!form) return;
-
+// 1. Anexa o listener do formulário IMEDIATAMENTE (antes de qualquer await)
+const form = document.getElementById("PainelNookie");
+if (form) {
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
 
@@ -48,4 +39,13 @@ document.addEventListener("DOMContentLoaded", () => {
             alert(error.message || "Erro no login");
         }
     });
-});
+}
+
+// 2. Verifica a sessão existente em paralelo, sem travar o formulário
+try {
+    if (await getAdminSession()) {
+        redirecionar();
+    }
+} catch (error) {
+    console.error("Não foi possível verificar a sessão:", error);
+}
