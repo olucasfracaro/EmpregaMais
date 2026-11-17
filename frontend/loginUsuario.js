@@ -20,7 +20,23 @@ function redirecionar() {
     window.location.href = "/principal";
 }
 
-// 1. Anexa o listener do formulário IMEDIATAMENTE (antes de qualquer await)
+async function verificarSessaoSeLoginAtivo() {
+    const loginPage = document.querySelector('[data-page="login"]');
+    
+    if (!loginPage || loginPage.hasAttribute("hidden")) {
+        return;
+    }
+
+    try {
+        if (await getAdminSession()) {
+            redirecionar();
+        }
+    } catch (error) {
+        console.error("Não foi possível verificar a sessão:", error);
+    }
+}
+
+// Configura o formulário 1 (PainelNookie) - site original
 const form = document.getElementById("PainelNookie");
 if (form) {
     form.addEventListener("submit", async function (event) {
@@ -31,7 +47,6 @@ if (form) {
 
         try {
             await autenticar(Email, Senha);
-
             this.reset();
             redirecionar();
         } catch (error) {
@@ -39,13 +54,42 @@ if (form) {
             alert(error.message || "Erro no login");
         }
     });
+
+    try {
+        if (await getAdminSession()) {
+            redirecionar();
+        }
+    } catch (error) {
+        console.error("Não foi possível verificar a sessão:", error);
+    }
 }
 
-// 2. Verifica a sessão existente em paralelo, sem travar o formulário
-try {
-    if (await getAdminSession()) {
-        redirecionar();
-    }
-} catch (error) {
-    console.error("Não foi possível verificar a sessão:", error);
+// Configura o formulário 2 (Metroform) - SPA com data-page="login"
+const form2 = document.getElementById("formLogin");
+const loginPage = document.querySelector('[data-page="login"]');
+
+if (form2 && loginPage) {
+    form2.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const Email = document.getElementById("l_email").value;
+        const Senha = document.getElementById("l_senha").value;
+
+        try {
+            await autenticar(Email, Senha);
+            this.reset();
+            redirecionar();
+        } catch (error) {
+            console.error(error);
+            alert(error.message || "Erro no login");
+        }
+    });
+
+    verificarSessaoSeLoginAtivo();
+
+    const observer = new MutationObserver(() => {
+        verificarSessaoSeLoginAtivo();
+    });
+
+    observer.observe(loginPage, { attributes: true, attributeFilter: ["hidden"] });
 }

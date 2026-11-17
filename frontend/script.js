@@ -429,22 +429,6 @@ function entrar(u) {
   location.hash = "#painel";
 }
 
-$("#formLogin").addEventListener("submit", e => {
-  e.preventDefault();
-  const em = $("#l_email").value.trim().toLowerCase();
-  const pw = $("#l_senha").value;
-  const u = USERS.find(x => x.email === em && x.senha === pw);
-  if (!u) {
-    $("#l_err").textContent = "Credenciais inválidas.";
-    $("#l_err").hidden = false;
-    return;
-  }
-  $("#l_err").hidden = true;
-  entrar(u);
-});
-
-$("#l_demo").addEventListener("click", () => entrar(USERS[0]));
-$("#p_sair").addEventListener("click", () => { sess.set(null); toast("Sessão encerrada"); location.hash = "#login"; });
 
 /**
  * 11. GESTÃO E FILA DO PAINEL

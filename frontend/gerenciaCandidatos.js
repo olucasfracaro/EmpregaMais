@@ -98,6 +98,13 @@ const darkModeToggle = document.getElementById('darkModeToggle');
 const apiStatusIndicator = document.getElementById('apiStatusIndicator');
 const apiStatusText = document.getElementById('apiStatusText');
 
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        window.location.href = "/#login";
+    });
+}
 
 function formatPhone(phoneDigits) {
     if (!phoneDigits) return '(00) 00000-0000';

@@ -20,9 +20,9 @@ public class PageController {
     @GetMapping("/login")
     public String loginPage() {
         if (isLocal) {
-            return "forward:/login.html";
+            return "redirect:/#login";
         }
-        return "redirect:" + frontendUrl + "/login";
+        return "redirect:" + frontendUrl + "/#login";
     }
 
     @GetMapping("/principal")
