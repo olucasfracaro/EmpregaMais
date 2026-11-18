@@ -86,6 +86,84 @@
         .nav-links a:hover, .nav-links a.active {
             color: #d32f2f;
         }
+
+        .nav-tab {
+            border: 0;
+            background: transparent;
+            color: #64748b;
+            font: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.25rem 0;
+        }
+
+        .nav-tab:hover,
+        .nav-tab.active {
+            color: #d32f2f;
+        }
+
+        .nav-tab:disabled,
+        .nav-tab.is-locked {
+            color: #94a3b8;
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        .nav-tab:disabled:hover,
+        .nav-tab.is-locked:hover {
+            color: #94a3b8;
+        }
+
+        .module-view[hidden] {
+            display: none !important;
+        }
+
+        .module-card {
+            width: 100%;
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 48px 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .module-card i {
+            color: #d32f2f;
+            font-size: 2.5rem;
+        }
+
+        .module-card h1 {
+            margin: 16px 0 8px;
+        }
+
+        .module-card p {
+            color: #64748b;
+            margin: 0 auto;
+            max-width: 620px;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+            text-align: left;
+        }
+
+        .analysis-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            background: #fff;
+        }
+
+        .analysis-card strong {
+            display: block;
+            margin-bottom: 8px;
+        }
         
         .nav-profile {
             display: flex;
@@ -94,6 +172,35 @@
             font-weight: 600;
             color: #334155;
             font-size: 0.95rem;
+        }
+
+        .nav-profile .nav-logout {
+            width: 36px;
+            height: 36px;
+            border: 0;
+            border-radius: 50%;
+            background: #f1f5f9;
+            color: #64748b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .nav-profile .nav-logout:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        body.dark-mode .nav-profile .nav-logout {
+            background: #334155;
+            color: #cbd5e1;
+        }
+
+        body.dark-mode .nav-profile .nav-logout:hover {
+            background: #7f1d1d;
+            color: #fecaca;
         }
         
         .nav-avatar {
@@ -117,19 +224,22 @@
             <i class="fa-solid fa-briefcase"></i> EmpregaMais
         </div>
         
-        <ul class="nav-links">
-            <li><a href="#" class="active"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-            <li><a href="#"><i class="fa-solid fa-users"></i> Candidatos</a></li>
-            <li><a href="#"><i class="fa-solid fa-building"></i> Vagas</a></li>
-            <li><a href="#"><i class="fa-solid fa-gear"></i> Configurações</a></li>
+        <ul class="nav-links" aria-label="Módulos do sistema">
+            <li><button type="button" class="nav-tab active" data-module="gerenciar"><i class="fa-solid fa-users-gear"></i> Gerenciar</button></li>
+            <li><button type="button" class="nav-tab" data-module="acompanhar"><i class="fa-solid fa-route"></i> Acompanhar</button></li>
+            <li><button type="button" class="nav-tab" data-module="comercial"><i class="fa-solid fa-handshake"></i> Comercial</button></li>
         </ul>
 
         <div class="nav-profile">
-            <div class="nav-avatar">RH</div>
-            <span>Recursos Humanos</span>
+            <div class="nav-avatar" id="avatar_usuario">RH</div>
+            <span id="nome_usuario">Recursos Humanos</span>
+            <button id="logoutBtn" class="nav-logout" title="Sair / Logout" aria-label="Sair">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
         </div>
     </nav>
 
+    <div id="gerenciarView" class="module-view">
     <div class="dashboard-container">
        
         <header class="red-header-banner">
@@ -154,9 +264,6 @@
                     <i class="fa-solid fa-moon"></i>
                 </button>
 
-                <button id="logoutBtn" class="btn-header-action" title="Sair / Logout">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
             </div>
         </header>
 
@@ -239,6 +346,24 @@
                 <p>Nenhum registro foi encontrado para o termo pesquisado.</p>
             </div>
         </main>
+    </div>
+    </div>
+
+    <div id="acompanharView" class="module-view" hidden>
+        <section class="module-card">
+            <i class="fa-solid fa-route"></i>
+            <h1>Acompanhar candidatos</h1>
+            <p>Acompanhe o andamento das análises e seleções realizadas no sistema.</p>
+            <div id="analysisGrid" class="analysis-grid"></div>
+        </section>
+    </div>
+
+    <div id="comercialView" class="module-view" hidden>
+        <section class="module-card">
+            <i class="fa-solid fa-handshake"></i>
+            <h1>Área Comercial</h1>
+            <p>Módulo dedicado ao acompanhamento de clientes, propostas e oportunidades comerciais.</p>
+        </section>
     </div>
 
     
@@ -355,6 +480,6 @@
 
     <div id="toastContainer" class="toast-container"></div>
 
-    <script type="module" src="gerenciaCandidatos.js"></script>
+    <script type="module" src="gerenciaCandidatos.js?v=202611181938"></script>
 </body>
 </html>

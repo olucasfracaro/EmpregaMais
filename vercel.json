@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/login",
-      "destination": "/login.html"
+      "destination": "/index.html#login"
     },
     {
       "source": "/principal",

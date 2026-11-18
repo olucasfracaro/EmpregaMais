@@ -1,4 +1,4 @@
-import { getAdminSession, supabase } from "./auth.js";
+import { getValidSession, supabase, ROLES } from "./auth.js?v=202611181938";
 
 async function autenticar(email, senha) {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -10,9 +10,12 @@ async function autenticar(email, senha) {
         throw new Error("E-mail ou senha inválidos");
     }
 
-    if (data.user?.app_metadata?.role !== "admin") {
+    const role = data.session?.user?.app_metadata?.role
+        ?? data.session?.user?.user_metadata?.role;
+
+    if (!Object.values(ROLES).includes(role)) {
         await supabase.auth.signOut();
-        throw new Error("Usuário sem permissão de administrador");
+        throw new Error("Usuário sem permissão.");
     }
 }
 
@@ -28,7 +31,7 @@ async function verificarSessaoSeLoginAtivo() {
     }
 
     try {
-        if (await getAdminSession()) {
+        if (await getValidSession()) {
             redirecionar();
         }
     } catch (error) {
@@ -36,40 +39,13 @@ async function verificarSessaoSeLoginAtivo() {
     }
 }
 
-// Configura o formulário 1 (PainelNookie) - site original
-const form = document.getElementById("PainelNookie");
-if (form) {
-    form.addEventListener("submit", async function (event) {
-        event.preventDefault();
 
-        const Email = document.getElementById("Email").value;
-        const Senha = document.getElementById("Senha").value;
-
-        try {
-            await autenticar(Email, Senha);
-            this.reset();
-            redirecionar();
-        } catch (error) {
-            console.error(error);
-            alert(error.message || "Erro no login");
-        }
-    });
-
-    try {
-        if (await getAdminSession()) {
-            redirecionar();
-        }
-    } catch (error) {
-        console.error("Não foi possível verificar a sessão:", error);
-    }
-}
-
-// Configura o formulário 2 (Metroform) - SPA com data-page="login"
-const form2 = document.getElementById("formLogin");
+// Configura o formulário (Metroform) - SPA com data-page="login"
+const form = document.getElementById("formLogin");
 const loginPage = document.querySelector('[data-page="login"]');
 
-if (form2 && loginPage) {
-    form2.addEventListener("submit", async function (event) {
+if (form && loginPage) {
+    form.addEventListener("submit", async function (event) {
         event.preventDefault();
 
         const Email = document.getElementById("l_email").value;

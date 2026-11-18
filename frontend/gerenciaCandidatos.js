@@ -1,5 +1,5 @@
 import { API_BASE_URL, SUPABASE_URL } from './config.js';
-import { authenticatedFetch, requireAdminSession, supabase } from './auth.js';
+import { authenticatedFetch, requireValidSession, supabase, ROLES } from './auth.js?v=202611181938';
 
 const pdfjsLib = globalThis.pdfjsLib;
 if (pdfjsLib) {
@@ -45,6 +45,24 @@ const mockData = [
         dataEnvio: '12/10/2026'
     }
 ];
+
+
+
+export const ROLE_NAMES = {
+    [ROLES.ADMIN]: "Administrador",
+    [ROLES.GESTOR]: "Gestor",
+    [ROLES.MONITOR]: "Monitor",
+    [ROLES.COMERCIAL]: "Comercial",
+    [ROLES.RH]: "Recursos Humanos"
+};
+
+const ROLE_AVATARS = {
+    [ROLES.ADMIN]: "ADM",
+    [ROLES.GESTOR]: "GES",
+    [ROLES.MONITOR]: "MON",
+    [ROLES.COMERCIAL]: "COM",
+    [ROLES.RH]: "RH"
+};
 
 let candidatos = [];
 const alteracoesPendentes = new Map();
@@ -97,6 +115,14 @@ const statRecusadoVal = document.getElementById('statRecusadoVal');
 const darkModeToggle = document.getElementById('darkModeToggle');
 const apiStatusIndicator = document.getElementById('apiStatusIndicator');
 const apiStatusText = document.getElementById('apiStatusText');
+
+const nomeUsuario = document.getElementById('nome_usuario');
+const avatarUsuario = document.getElementById('avatar_usuario');
+const moduleTabs = [...document.querySelectorAll('[data-module]')];
+const gerenciarView = document.getElementById('gerenciarView');
+const acompanharView = document.getElementById('acompanharView');
+const comercialView = document.getElementById('comercialView');
+const analysisGrid = document.getElementById('analysisGrid');
 
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
@@ -795,19 +821,109 @@ async function atualizarStatusETabela() {
     await carregarDadosIniciais();
 }
 
+const MODULE_PERMISSIONS = {
+    gerenciar: [ROLES.ADMIN, ROLES.GESTOR, ROLES.RH],
+    acompanhar: [ROLES.ADMIN, ROLES.MONITOR],
+    comercial: [ROLES.ADMIN, ROLES.COMERCIAL]
+};
+
+function podeAcessarModulo(role, module) {
+    return MODULE_PERMISSIONS[module]?.includes(role) ?? false;
+}
+
+function mostrarModulo(module) {
+    if (!module) return;
+
+    const views = {
+        gerenciar: gerenciarView,
+        acompanhar: acompanharView,
+        comercial: comercialView
+    };
+
+    Object.entries(views).forEach(([name, view]) => {
+        if (view) view.hidden = name !== module;
+    });
+
+    moduleTabs.forEach(tab => {
+        const active = tab.dataset.module === module;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-current', active ? 'page' : 'false');
+    });
+}
+
+async function carregarAnalises() {
+    if (!analysisGrid) return;
+
+    try {
+        const response = await authenticatedFetch(`${API_BASE_URL}/analises`);
+        if (!response.ok) throw new Error(`Erro ao buscar análises: ${response.status}`);
+
+        const analises = await response.json();
+        if (!Array.isArray(analises) || analises.length === 0) {
+            analysisGrid.innerHTML = '<p>Nenhuma análise encontrada.</p>';
+            return;
+        }
+
+        analysisGrid.innerHTML = analises.map(analise => `
+            <article class="analysis-card">
+                <strong>Análise #${analise.id ?? '-'}</strong>
+                <span>Status: ${analise.status ?? 'Não informado'}</span>
+                ${analise.resultado ? `<p>${analise.resultado}</p>` : ''}
+            </article>
+        `).join('');
+    } catch (error) {
+        console.error('Não foi possível carregar as análises:', error);
+        analysisGrid.innerHTML = '<p>Não foi possível carregar as análises.</p>';
+    }
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
+    let session;
+
     try {
-        await requireAdminSession();
+        session = await requireValidSession();
     } catch (error) {
         console.error(error);
         return;
     }
 
     setupDarkMode();
-    verificarStatusApi();
-    setInterval(atualizarStatusETabela, 60 * 1000);
-    carregarDadosIniciais();
+
+    const role = session.user?.app_metadata?.role
+        ?? session.user?.user_metadata?.role;
+
+    if (nomeUsuario) nomeUsuario.textContent = ROLE_NAMES[role] ?? "Usuário";
+    if (avatarUsuario) avatarUsuario.textContent = ROLE_AVATARS[role] ?? "USU";
+
+    moduleTabs.forEach(tab => {
+        const module = tab.dataset.module;
+        const permitido = podeAcessarModulo(role, module);
+        tab.disabled = !permitido;
+        tab.classList.toggle('is-locked', !permitido);
+        tab.title = permitido ? '' : 'Sem permissão para acessar esta área';
+        tab.setAttribute('aria-disabled', String(!permitido));
+        tab.addEventListener('click', () => {
+            if (!permitido) return;
+            mostrarModulo(module);
+            if (module === 'acompanhar') carregarAnalises();
+        });
+    });
+
+    let moduloInicial = 'gerenciar';
+    if (!podeAcessarModulo(role, moduloInicial)) {
+        moduloInicial = ['acompanhar', 'comercial'].find(module =>
+            podeAcessarModulo(role, module)
+        ) ?? 'gerenciar';
+    }
+    mostrarModulo(moduloInicial);
+
+    if (podeAcessarModulo(role, 'gerenciar')) {
+        verificarStatusApi();
+        setInterval(atualizarStatusETabela, 60 * 3000);
+        carregarDadosIniciais();
+    }
+
+    if (moduloInicial === 'acompanhar') carregarAnalises();
 
     if (searchInput) searchInput.addEventListener('input', renderTable);
     if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);

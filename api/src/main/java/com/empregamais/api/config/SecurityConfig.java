@@ -22,6 +22,8 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origins:https://empregamais-ten.vercel.app,https://*.vercel.app,https://*.app.github.dev,http://localhost:[*]}")
     private String allowedOrigins;
 
+    private final String[] ROLES = {"admin", "gestor", "monitor", "comercial", "rh"};
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -49,8 +51,14 @@ public class SecurityConfig {
                     "/principal"
                 ).permitAll()
                 .requestMatchers(HttpMethod.POST, "/candidato").permitAll()
-                .requestMatchers("/candidatos", "/candidatos/**", "/candidato/**", "/analise", "/analise/**",
-                    "/analises", "/analises/**").hasRole("ADMIN")
+                .requestMatchers("/candidatos", "/candidatos/**", "/candidato/**")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_GESTOR", "ROLE_RH")
+                .requestMatchers("/analise", "/analise/**", "/analises", "/analises/**")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_MONITOR")
+                .requestMatchers("/acompanhar", "/acompanhar/**")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_MONITOR")
+                .requestMatchers("/comercial", "/comercial/**", "/comerciais/**")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_COMERCIAL")
                 .requestMatchers(
                     "/swagger-ui.html",
                     "/swagger-ui/**"
@@ -70,9 +78,25 @@ public class SecurityConfig {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             var appMetadata = jwt.getClaimAsMap("app_metadata");
+            var userMetadata = jwt.getClaimAsMap("user_metadata");
             Object role = appMetadata == null ? null : appMetadata.get("role");
-            if ("admin".equals(role)) {
+            if (role == null && userMetadata != null) {
+                role = userMetadata.get("role");
+            }
+            if (!Arrays.asList(ROLES).contains(role)) {
+                return List.of();
+            }
+
+            if (role.equals("admin")) {
                 return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            } else if (role.equals("gestor")) {
+                return List.of(new SimpleGrantedAuthority("ROLE_GESTOR"));
+            } else if (role.equals("monitor")) {
+                return List.of(new SimpleGrantedAuthority("ROLE_MONITOR"));
+            } else if (role.equals("comercial")) {
+                return List.of(new SimpleGrantedAuthority("ROLE_COMERCIAL"));
+            } else if (role.equals("rh")) {
+                return List.of(new SimpleGrantedAuthority("ROLE_RH"));
             }
             return List.of();
         });
