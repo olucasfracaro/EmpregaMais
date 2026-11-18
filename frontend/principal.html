@@ -8,19 +8,130 @@
     <link rel="stylesheet" href="style_principal.css">
     <link rel="icon" href="ico.png">
    
-   
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+   
+    <style>
+        
+        body {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+            align-items: stretch !important;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+      
+        .dashboard-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 20px auto !important;
+            padding: 0 20px;
+            box-sizing: border-box;
+            flex: 1;
+        }
+
+       
+        .custom-table th, .custom-table td {
+            white-space: nowrap !important;
+        }
+
+        
+        .main-navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-bottom: 1px solid #eaeaea;
+            box-sizing: border-box;
+        }
+        
+        .nav-brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #d32f2f;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 25px;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: #d32f2f;
+        }
+        
+        .nav-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.95rem;
+        }
+        
+        .nav-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #d32f2f;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body>
 
+    <nav class="main-navbar">
+        <div class="nav-brand">
+            <i class="fa-solid fa-briefcase"></i> EmpregaMais
+        </div>
+        
+        <ul class="nav-links">
+            <li><a href="#" class="active"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="#"><i class="fa-solid fa-users"></i> Candidatos</a></li>
+            <li><a href="#"><i class="fa-solid fa-building"></i> Vagas</a></li>
+            <li><a href="#"><i class="fa-solid fa-gear"></i> Configurações</a></li>
+        </ul>
+
+        <div class="nav-profile">
+            <div class="nav-avatar">RH</div>
+            <span>Recursos Humanos</span>
+        </div>
+    </nav>
+
     <div class="dashboard-container">
        
-        
         <header class="red-header-banner">
             <div class="brand-section">
                 <h1><i class="fa-solid fa-users-gear"></i> Gestão de Candidatos</h1>
@@ -38,7 +149,6 @@
                     >
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
                 </div>
-
                 
                 <button id="darkModeToggle" class="btn-header-action" title="Alternar Modo Escuro">
                     <i class="fa-solid fa-moon"></i>
@@ -60,7 +170,6 @@
                 </button>
             </div>
 
-            
             <div class="toolbar-group">
                 <span class="toolbar-label"><i class="fa-solid fa-sort"></i> Ordenar:</span>
                 <select id="sortUnifiedSelect" class="btn-toolbar sort-select">
@@ -116,7 +225,7 @@
                             <th>TELEFONE</th>
                             <th>EMAIL</th>
                             <th>STATUS</th>
-                            <th style="text-align: center-right;">AÇÕES</th>
+                            <th style="text-align: right;">AÇÕES</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -176,7 +285,6 @@
                     </div>
                 </div>
 
-                
                 <div>
                     <div class="modal-section-title">
                         <i class="fa-solid fa-file-image"></i> Currículo Anexo
@@ -202,7 +310,6 @@
                     </div>
                 </div>
 
-                
                 <div>
                     <div class="modal-section-title">
                         <i class="fa-solid fa-comments"></i> Histórico da Mensagem
