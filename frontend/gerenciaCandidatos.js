@@ -65,6 +65,7 @@ const ROLE_AVATARS = {
 };
 
 let candidatos = [];
+
 const alteracoesPendentes = new Map();
 const exclusoesPendentes = new Map();
 const curriculoBaseUrl = 'https://kampbrxrosxtspcmgewr.supabase.co/storage/v1/object/public/curriculos/';
@@ -888,6 +889,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     setupDarkMode();
+    carregarDadosIniciais();
 
     const role = session.user?.app_metadata?.role
         ?? session.user?.user_metadata?.role;
