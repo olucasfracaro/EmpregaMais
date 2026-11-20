@@ -1,0 +1,70 @@
+@startuml
+skinparam defaulttextalignment center
+skinparam rectangle {
+    RoundCorner 10
+}
+
+
+actor "Candidato" as ator_candidato
+
+rectangle "Metroform" {
+    component [Trabalhe conosco] as cadastro
+    component [Solicitar orçamento] as orcamento
+}
+
+rectangle "EmpregaMais" {
+    component [Gerenciar] as gerenciar
+    component [Acompanhar] as acompanhar
+    component [Comercial] as comercial
+}
+
+rectangle "Backend (API's)" {
+    component [Spring Boot (Java)] as sb
+    component [FastAPI (Python)] as fapi
+}
+
+database "Supabase (SQL)" {
+    folder [**Tabela candidato**] as tabela_candidato
+    folder [**Tabela solicitante**] as tabela_solicitante
+    folder [**Tabela orçamento**] as tabela_orcamento
+    folder [**Tabela analises_curriculo**] as tabela_analises
+}
+
+actor "Solicitante" as ator_solicitante
+
+actor "Administrador" as ator_administrador
+actor "Gestor" as ator_gestor
+actor "Monitor" as ator_monitor
+actor "Comercial" as ator_comercial
+
+
+' CADASTRO
+ator_candidato --> cadastro : "Envia"
+cadastro --> sb : "POST"
+cadastro --> sb : "POST"
+sb --> tabela_candidato : "INSERT"
+sb --> fapi : "POST"
+fapi --> tabela_analises : "INSERT"
+
+' EmpregaMais
+ator_administrador --> EmpregaMais : "Acesso total"
+ator_gestor --> gerenciar : "Gestão de candidatos"
+ator_monitor --> acompanhar : "Acompanhamento de empregados"
+ator_comercial --> comercial : "Orçamento de solicitantes"
+
+gerenciar <-- sb : "GET"
+sb <-- tabela_candidato : "SELECT"
+
+comercial <-- sb : "GET"
+sb <-- tabela_orcamento : "SELECT"
+
+' ORÇAMENTO
+ator_solicitante --> orcamento : "Envia"
+orcamento --> sb : "POST"
+orcamento --> sb : "POST"
+sb --> tabela_orcamento : "INSERT"
+sb --> tabela_solicitante : "INSERT"
+
+tabela_solicitante --> tabela_orcamento
+
+@enduml
