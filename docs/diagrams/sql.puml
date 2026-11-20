@@ -1,0 +1,71 @@
+@startuml
+' Linhas retas
+skinparam linetype ortho
+
+package "SQL" <<Frame>> #DDDDDD {
+
+    entity "Candidato" as candidato {
+        * **id** : bigint <<**PK**, AUTO_INCREMENT>>
+        ==
+        * **nome** : text <<NOT NULL>>
+        * **telefone** : text <<NOT NULL>>
+        * **email** : text <<UNIQUE, NOT NULL>>
+        * **mensagem** : text <<DEFAULT ' '>>
+        * **curriculo_path** : text <<NOT NULL>>
+        * **status** : text <<NOT NULL, DEFAULT ' '>>
+        --
+        * **created_at** : timestamptz <<NOT NULL DEFAULT now()>>
+        * **updated_at** : timestamptz <<DEFAULT now()>>
+    }
+
+    entity "Análise do Currículo" as analise_curriculo {
+        * **id** : bigint <<**PK**, AUTO_INCREMENT>>
+        * **candidato_id** : bigint <<FK, NOT NULL>>
+        ==
+        * **status** : text <<NOT NULL, DEFAULT ''>>
+        * **resultado** : jsonb <<NOT NULL>>
+        * **modelo** : text <<NOT NULL>>
+        * **erro** : text
+        --
+        * **created_at** : timestamptz <<NOT NULL, DEFAULT now()>>
+        * **updated_at** : timestamptz <<DEFAULT now()>>
+    }
+
+    entity "Solicitante" as solicitante {
+        * **id** : bigint <<**PK**, AUTO_INCREMENT>>
+        ==
+        * **nome** : text <<NOT NULL>>
+        * **cargo** : text <<DEFAULT ''>>
+        * **empresa** : text <<NOT NULL>>
+        * **email** : text <<UNIQUE, NOT NULL>>
+        * **telefone** : text <<NOT NULL>>
+        * **horario_preferido** : text <<DEFAULT ''>>
+        --
+        * **created_at** : timestamptz <<NOT NULL, DEFAULT now()>>
+        * **updated_at** : timestamptz <<DEFAULT now()>>
+    }
+
+    entity "Orçamento" as orcamento {
+        * **id** : bigint <<**PK**, AUTO_INCREMENT>>
+        * **solicitante_id** : <<FK, NOT NULL>>
+        --
+        * **cidade** : text <<NOT NULL>>
+        * **tipo_obra** : text <<DEFAULT ''>>
+        * **fase_atual** : text <<DEFAULT ''>>
+        * **pavimentos** : int <<DEFAULT 0>>
+        * **solucoes_requeridas** : text <<NOT NULL>>
+        * **prazo** : text <<DEFAULT ''>>
+        * **observacoes** : text <<DEFAULT ''>>
+        --
+        * **created_at** : timestamptz <<NOT NULL, DEFAULT now()>>
+        * **updated_at** : timestamptz <<DEFAULT now()>>
+    }
+
+    
+    ' Relacionamentos
+    candidato ||--o| analise_curriculo : "possui"
+    solicitante ||--|{ orcamento : "solicita"
+}
+
+@enduml
+
