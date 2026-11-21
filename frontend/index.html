@@ -40,7 +40,7 @@
     <div data-page="inicio">
       <section class="hero">
         <div class="wrap">
-    <span class="eyebrow eyebrow-hl">Central de atendimento Metroform</span>
+          <span class="eyebrow eyebrow-hl">Central de atendimento Metroform</span>
           <h1>Toda pessoa que chega <span class="hl">recebe o mesmo padrão</span> de atendimento.</h1>
           <p>Quer trabalhar na Metroform ou precisa de um orçamento para a sua obra? Escolha o seu caminho.</p>
           <div class="doors">
@@ -462,103 +462,9 @@
             <label class="f">Senha<input type="password" id="l_senha" autocomplete="current-password"></label>
             <p class="err" id="l_err" hidden></p>
             <button class="btn" type="submit">Entrar</button>
-            <button class="btn ghost" type="button" id="l_demo">Modo Demonstração</button>
           </form>
         </div>
       </div>
-    </div>
-
-    <!-- PÁGINA: PAINEL -->
-    <div data-page="painel" hidden>
-      <div class="pbar">
-        <div class="wrap">
-          <h2>Painel de Gestão</h2>
-          <div class="who">
-            <span class="avatar" id="p_av">A</span>
-            <span><b id="p_nome" class="txt-on-dark">Atendente</b><br><span id="p_cargo">RH</span></span>
-            <button class="btn sm ghost btn-on-dark" id="p_sair">Sair</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="wrap">
-        <p class="demo-note mt-18" id="p_manual_warn" hidden>Aceite pendente no <a href="#manual">Manual de Conduta</a>.</p>
-        
-        <div class="kpis">
-          <div class="kpi"><span>Em aberto</span><strong id="k_abertos">0</strong></div>
-          <div class="kpi alert"><span>Prazo Vencido</span><strong id="k_atraso">0</strong></div>
-          <div class="kpi"><span>Novos Hoje</span><strong id="k_hoje">0</strong></div>
-          <div class="kpi"><span>Concluídos</span><strong id="k_concl">0</strong></div>
-        </div>
-
-        <div class="toolbar">
-          <select id="f_tipo" aria-label="Filtrar por tipo">
-            <option value="">Todos os Tipos</option>
-            <option value="candidato">Candidatos</option>
-            <option value="orcamento">Orçamentos</option>
-          </select>
-          <select id="f_status" aria-label="Filtrar por situação">
-            <option value="abertos">Em Aberto</option>
-            <option value="atraso">Prazo Vencido</option>
-            <option value="todos">Todos</option>
-            <option value="concluidos">Concluídos</option>
-          </select>
-          <input type="text" id="f_busca" placeholder="Buscar por protocolo, nome..." aria-label="Buscar">
-          <button class="btn sm dark" id="p_novo">+ Registrar Contato</button>
-        </div>
-
-        <div class="ws">
-          <div class="scroll">
-            <table class="t queue wide">
-              <thead>
-                <tr>
-                  <th>Protocolo</th>
-                  <th>Tipo</th>
-                  <th>Nome</th>
-                  <th>Assunto</th>
-                  <th>Aderência</th>
-                  <th>Status</th>
-                  <th>SLA</th>
-                </tr>
-              </thead>
-              <tbody id="q_body"></tbody>
-            </table>
-            <div class="empty" id="q_empty" hidden>Nenhum registro encontrado.</div>
-          </div>
-          <aside class="detail" id="detail">
-            <div class="empty">Selecione um item da fila para carregar os detalhes.</div>
-          </aside>
-        </div>
-      </div>
-    </div>
-
-    <!-- PÁGINA: REGISTRO MANUAL DE CONTATO -->
-    <div data-page="novo" hidden>
-      <section>
-        <div class="wrap max-w-720">
-          <form class="card" id="formNovo" novalidate>
-            <div>
-              <span class="eyebrow">Novo Atendimento</span>
-              <h2 class="mt-8">Registrar Contato Manual</h2>
-            </div>
-            <div class="row">
-              <label class="f">Tipo<select id="n_tipo"><option value="candidato">Candidato</option><option value="orcamento">Orçamento</option></select></label>
-              <label class="f">Canal de Origem<select id="n_canal"><option>WhatsApp</option><option>Telefone</option><option>E-mail</option><option>Instagram</option><option>Presencial</option></select></label>
-            </div>
-            <div class="row">
-              <label class="f">Nome <span class="req">*</span><input type="text" id="n_nome"></label>
-              <label class="f">Contato <span class="req">*</span><input type="text" id="n_contato"></label>
-            </div>
-            <label class="f" id="n_vaga_wrap">Assunto / Vaga<input type="text" id="n_assunto" placeholder="Ex.: Soldador ou Proteção Coletiva"></label>
-            <label class="f">Resumo<textarea id="n_resumo"></textarea></label>
-            <p class="err" id="n_err" hidden></p>
-            <div class="flex-gap-10">
-              <button class="btn" type="submit">Salvar Registro</button>
-              <a class="btn ghost" href="#painel">Cancelar</a>
-            </div>
-          </form>
-        </div>
-      </section>
     </div>
 
   </main>

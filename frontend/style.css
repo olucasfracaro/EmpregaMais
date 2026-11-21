@@ -357,3 +357,9 @@ footer b, footer a { color: var(--on-dark); }
 .btn-cadastrar:active {
   transform: scale(0.98);
 }
+
+/* Estilo para o link ativo no menu (sublinhado vermelho) */
+.nav a.active {
+  color: var(--brand, #ff3333); /* Cor principal do destaque */
+  border-bottom: 2px solid #ff3333; /* A linha vermelha embaixo */
+}

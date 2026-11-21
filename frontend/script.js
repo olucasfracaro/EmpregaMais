@@ -1,16 +1,11 @@
 /**
+ * ============================================================================
  * 1. CONFIGURAÇÕES E ESTADO GLOBAL
+ * 💡 [O QUE VOCÊ PODE MEXER]: 
+ * - VAGAS: Aqui você adiciona, remove ou edita as vagas que aparecem no site. 
+ *   Basta respeitar a estrutura (id, area, titulo, local, req e desc).
+ * ============================================================================
  */
-const CONFIG = {
-  webhookUrl: "", // URL para webhook externo (ex: N8N)
-  sla: { candidato: 48, orcamento: 2 } // SLA de primeira resposta em horas
-};
-
-const USERS = [
-  { email: "rh@metroform.demo", senha: "demo", nome: "Equipe RH", cargo: "Recrutamento e seleção" },
-  { email: "comercial@metroform.demo", senha: "demo", nome: "Equipe Comercial", cargo: "Atendimento comercial" }
-];
-
 const VAGAS = [
   { id: "op", area: "fabril", titulo: "Operador(a) de Produção", local: "Fábrica", req: { exp: 0, nrs: ["NR-12"], hab: ["Ferramentas manuais e elétricas"], turno: true }, desc: "Operação de máquinas e montagem de peças metálicas." },
   { id: "sol", area: "fabril", titulo: "Soldador(a)", local: "Fábrica", req: { exp: 2, nrs: ["NR-12"], hab: ["Solda MIG/MAG", "Leitura de desenho técnico"], turno: true }, desc: "Soldagem de estruturas metálicas conforme desenho técnico." },
@@ -26,7 +21,6 @@ const STATUS = {
   candidato: ["Novo", "Em triagem", "Entrevista agendada", "Banco de talentos", "Aprovado", "Não selecionado"],
   orcamento: ["Novo", "Em qualificação", "Visita técnica", "Proposta enviada", "Fechado", "Perdido"]
 };
-const FINAIS = ["Aprovado", "Não selecionado", "Banco de talentos", "Fechado", "Perdido"];
 
 const SCRIPTS = {
   cand: [
@@ -47,169 +41,71 @@ const SCRIPTS = {
   ]
 };
 
-const CHECKLIST = {
-  candidato: ["Resposta em até 48h úteis", "Informou número do protocolo", "Realizou triagem por requisitos", "Registrou próximo passo", "Forneceu retorno final"],
-  orcamento: ["Resposta em até 2h úteis", "Informou número do protocolo", "Identificou escopo da obra", "Encaminhou ao consultor técnico", "Registrou status no painel"]
-};
-
 /**
- * 2. UTILITÁRIOS E FUNÇÕES AUXILIARES
+ * ============================================================================
+ * 2. UTILITÁRIOS E ROTEAMENTO (MENU / NAVEGAÇÃO)
+ * 💡 [O QUE VOCÊ PODE MEXER]: 
+ * - É aqui que a mágica do sublinhado vermelho acontece. A função `route` verifica 
+ *   qual é a página atual e coloca a classe `active` no link correspondente do menu.
+ * ============================================================================
  */
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const checked = id => $$("#" + id + " input:checked").map(i => i.value);
-const fmt = iso => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
-function toast(msg) {
-  const t = $("#toast");
-  t.textContent = msg;
-  t.hidden = false;
-  clearTimeout(t._h);
-  t._h = setTimeout(() => t.hidden = true, 2600);
-}
-
-function protocolo(tipo) {
-  const n = String(Math.floor(Math.random() * 9000) + 1000);
-  return "MF-" + (tipo === "candidato" ? "C" : "O") + "-" + new Date().getFullYear() + "-" + n;
-}
-
-async function copyText(text, btn) {
-  try {
-    await navigator.clipboard.writeText(text);
-    btn.textContent = "Copiado";
-  } catch (e) {
-    btn.textContent = "Erro";
-  }
-  setTimeout(() => btn.textContent = "Copiar", 1500);
-}
-
-function sendWebhook(payload) {
-  if (!CONFIG.webhookUrl) return;
-  fetch(CONFIG.webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  }).catch(() => {});
-}
-
-/**
- * 3. ARMAZENAMENTO LOCAL (LOCALSTORAGE / SESSIONSTORAGE)
- */
-const store = {
-  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-};
-
-let mem = {};
-const sess = {
-  get() { try { const v = sessionStorage.getItem("mf_user"); return v ? JSON.parse(v) : mem.user || null; } catch (e) { return mem.user || null; } },
-  set(u) { mem.user = u; try { u ? sessionStorage.setItem("mf_user", JSON.stringify(u)) : sessionStorage.removeItem("mf_user"); } catch (e) {} }
-};
-
-/**
- * 4. CÁLCULO DE ADERÊNCIA À VAGA
- */
-function aderencia(d) {
-  const v = VAGAS.find(x => x.id === d.vagaId);
-  if (!v) return { score: 0, itens: [] };
-  
-  const r = v.req, itens = [];
-  const add = (nome, peso, ok, parcial) => itens.push({ nome, peso, pts: Math.round(peso * (ok ? 1 : (parcial || 0))) });
-  const exp = Number(d.exp || 0);
-
-  add("Experiência", 30, exp >= r.exp, r.exp ? Math.min(exp / r.exp, 1) * .7 : 1);
-  if (v.area === "fabril") {
-    const nrs = d.nrs || [], hab = d.hab || [];
-    add("Normas (NRs)", 25, r.nrs.every(n => nrs.includes(n)), r.nrs.filter(n => nrs.includes(n)).length / r.nrs.length);
-    add("Habilidades", 25, r.hab.every(h => hab.includes(h)), r.hab.filter(h => hab.includes(h)).length / r.hab.length);
-    if (r.campo) add("Disponibilidade Obras", 20, d.campo === "sim");
-    else add("Turno e Transporte", 20, (d.turnos || []).length > 0 && d.transp !== "nao", (d.turnos || []).length ? .5 : 0);
-  } else {
-    const ferr = d.ferr || [];
-    add("Escolaridade", 25, Number(d.esc || 0) >= r.esc, .4);
-    add("Ferramentas", 25, r.ferr.every(f => ferr.includes(f)), r.ferr.filter(f => ferr.includes(f)).length / r.ferr.length);
-    add("Presencial", 20, d.pres === "sim");
-  }
-  return { score: itens.reduce((a, b) => a + b.pts, 0), itens };
-}
-
-const corAder = s => s >= 75 ? "var(--ok)" : s >= 50 ? "var(--warn)" : "var(--bad)";
-
-/**
- * 5. SEED INICIAL DE DADOS
- */
-function seed() {
-  const h = n => new Date(Date.now() - n * 3600e3).toISOString();
-  const cands = [
-    { nome: "Marcos Vieira", email: "marcos@exemplo.com", tel: "(11) 90000-0001", cidade: "Guarulhos", vagaId: "mon", area: "fabril", exp: "4", nrs: ["NR-18", "NR-35"], hab: ["Montagem em obra"], turnos: ["1º turno"], transp: "sim", campo: "sim", porque: "Experiência prévia em montagem de estruturas.", h: 3, status: "Em triagem" },
-    { nome: "Juliana Prado", email: "juliana@exemplo.com", tel: "(11) 90000-0002", cidade: "São Paulo", vagaId: "rh", area: "administrativo", exp: "2", esc: "4", ferr: ["Excel", "ATS"], pres: "sim", porque: "Atuação focada em recrutamento operacional.", h: 60, status: "Novo" }
-  ].map(c => ({ id: crypto.randomUUID?.() || String(Math.random()), tipo: "candidato", protocolo: protocolo("candidato"), criadoEm: h(c.h), canal: "Site", status: c.status, exemplo: true, nome: c.nome, email: c.email, tel: c.tel, dados: c, notas: [] }));
-
-  const orcs = [
-    { nome: "Patrícia Lima", empresa: "Construtora Exemplo", cargo: "Engenheira", email: "patricia@exemplo.com", tel: "(11) 90000-0004", cidade: "São Paulo - SP", tipo: "Residencial vertical", fase: "Estrutura", pav: "22", linhas: ["Proteção coletiva metálica"], prazo: "urgente", h: 1.5, status: "Novo" }
-  ].map(o => ({ id: crypto.randomUUID?.() || String(Math.random()), tipo: "orcamento", protocolo: protocolo("orcamento"), criadoEm: h(o.h), canal: "Site", status: o.status, exemplo: true, nome: o.nome, email: o.email, tel: o.tel, dados: o, notas: [] }));
-
-  return [...cands, ...orcs];
-}
-
-let DB = store.get("mf_atendimentos", null);
-if (!DB) { DB = seed(); store.set("mf_atendimentos", DB); }
-const save = () => store.set("mf_atendimentos", DB);
-
-/**
- * 6. ROTEAMENTO DE PÁGINAS (SPA)
- */
-const PROTEGIDAS = ["painel", "novo"];
-
+// 💡 [DICA]: Faz a troca de telas e gerencia o sublinhado vermelho (classe `active` no menu)
 function route() {
-  let r = (location.hash || "#inicio").slice(1).split("?")[0] || "inicio";
-  const sec = document.querySelector('[data-page="' + r + '"]');
+  const hash = location.hash.replace("#", "") || "inicio";
+  const pages = $$("[data-page]");
   
-  if (!sec) {
-    const alvo = document.getElementById(r);
-    if (alvo) { alvo.scrollIntoView(); return; }
-    r = "inicio";
+  let target = pages.find(p => p.dataset.page === hash);
+  if (!target) {
+    target = pages.find(p => p.dataset.page === "inicio");
   }
 
-  if (PROTEGIDAS.includes(r) && !sess.get()) { location.hash = "#login"; return; }
-  if (r === "login" && sess.get()) { location.hash = "#painel"; return; }
-
-  $$("[data-page]").forEach(p => p.hidden = p.dataset.page !== r);
-  $$(".nav a").forEach(a => a.classList.toggle("on", a.dataset.r === r));
+  pages.forEach(p => p.hidden = p !== target);
   
-  $("#nav").classList.remove("open");
-  $("#menuBtn").setAttribute("aria-expanded", "false");
-  $("#navLogin").textContent = sess.get() ? "Painel" : "Área do atendente";
-  $("#navLogin").href = sess.get() ? "#painel" : "#login";
+  // 💡 [IMPORTANTE PARA O SUBLINHADO]: Percorre os links do menu e ativa/desativa a classe `active`
+  $$(".nav a").forEach(a => {
+    const href = a.getAttribute("href");
+    if (href === "#" + hash) {
+      a.classList.add("active");
+    } else {
+      a.classList.remove("active");
+    }
+  });
 
   window.scrollTo(0, 0);
-  if (r === "painel") renderPainel();
 }
 
 window.addEventListener("hashchange", route);
-$("#menuBtn").addEventListener("click", () => {
-  const open = $("#nav").classList.toggle("open");
-  $("#menuBtn").setAttribute("aria-expanded", open);
-});
 
-$$("[data-scroll]").forEach(a => a.addEventListener("click", e => {
-  e.preventDefault();
-  document.querySelector(a.getAttribute("href")).scrollIntoView({ behavior: "smooth" });
-}));
-
-$("#logo").addEventListener("error", () => {
-  $("#logo").hidden = true;
-  $("#wordmark").hidden = false;
-});
+// Botão de menu mobile (celular)
+const menuBtn = $("#menuBtn");
+const nav = $("#nav");
+if (menuBtn && nav) {
+  menuBtn.addEventListener("click", () => {
+    const expanded = menuBtn.getAttribute("aria-expanded") === "true";
+    menuBtn.setAttribute("aria-expanded", !expanded);
+    nav.classList.toggle("open");
+  });
+}
 
 /**
- * 7. LÓGICA DA SEÇÃO TRABALHE CONOSCO
+ * ============================================================================
+ * 3. LÓGICA DA SEÇÃO TRABALHE CONOSCO (VAGAS)
+ * 💡 [O QUE VOCÊ PODE MEXER]: 
+ * - Renderiza dinamicamente os cards de vagas na tela com base na lista `VAGAS`.
+ * ============================================================================
  */
 let areaAtual = "fabril";
 
 function renderVagas() {
-  $("#vagasList").innerHTML = VAGAS.filter(v => v.area === areaAtual).map(v => {
+  const container = $("#vagasList");
+  if (!container) return;
+
+  container.innerHTML = VAGAS.filter(v => v.area === areaAtual).map(v => {
     const r = v.req;
     const tags = v.area === "fabril"
       ? [...r.nrs, ...(r.campo ? ["Obras"] : ["Turnos"])]
@@ -234,424 +130,196 @@ $$('.tabs [data-area]').forEach(t => t.addEventListener("click", () => {
   renderVagas();
 }));
 
-$("#vagasList").addEventListener("click", e => {
+document.addEventListener("click", e => {
   const b = e.target.closest("[data-vaga]");
   if (!b) return;
   const v = VAGAS.find(x => x.id === b.dataset.vaga);
-  $("#c_area").value = v.area;
+  if (!v) return;
+  
+  if ($("#c_area")) $("#c_area").value = v.area;
   syncArea();
-  $("#c_vaga").value = v.id;
+  if ($("#c_vaga")) $("#c_vaga").value = v.id;
   renderVagaInfo();
-  $("#candidatura").scrollIntoView({ behavior: "smooth" });
+  
+  const formSec = $("#candidatura");
+  if (formSec) formSec.scrollIntoView({ behavior: "smooth" });
 });
 
 function syncArea() {
-  const a = $("#c_area").value;
-  $("#c_vaga").innerHTML = VAGAS.filter(v => v.area === a).map(v => `<option value="${v.id}">${esc(v.titulo)}</option>`).join("");
-  $("#qFabril").hidden = a !== "fabril";
-  $("#qAdm").hidden = a !== "administrativo";
+  const areaSelect = $("#c_area");
+  const vagaSelect = $("#c_vaga");
+  if (!areaSelect || !vagaSelect) return;
+
+  const a = areaSelect.value;
+  vagaSelect.innerHTML = VAGAS.filter(v => v.area === a).map(v => `<option value="${v.id}">${esc(v.titulo)}</option>`).join("");
+  
+  const qFabril = $("#qFabril");
+  const qAdm = $("#qAdm");
+  if (qFabril) qFabril.hidden = a !== "fabril";
+  if (qAdm) qAdm.hidden = a !== "administrativo";
+  
   renderVagaInfo();
 }
 
 function renderVagaInfo() {
-  const v = VAGAS.find(x => x.id === $("#c_vaga").value);
+  const vagaSelect = $("#c_vaga");
+  const vagaInfo = $("#vagaInfo");
+  if (!vagaSelect || !vagaInfo) return;
+
+  const v = VAGAS.find(x => x.id === vagaSelect.value);
   if (!v) return;
   const r = v.req;
   const reqs = v.area === "fabril"
     ? [`Experiência: ${r.exp ? "a partir de " + r.exp + " ano(s)" : "não exigida"}`, `Normas: ${r.nrs.join(", ")}`, `Habilidades: ${r.hab.join(", ")}`]
-    : [`Experiência: a partir de ${r.exp} ano(s)`, `Escolaridade: ${["", "Médio completo", "Técnico", "Superior Cursando", "Superior Completo"][r.esc]}`, `Ferramentas: ${r.ferr.join(", ")}`];
+    : [`Experiência: a partir de ${r.exp} ano(s)`, `Escolaridade: ${["", "Ensino Médio", "Técnico", "Superior Cursando", "Superior Completo", "Pós-Graduação"][r.esc]}`, `Ferramentas: ${r.ferr.join(", ")}`];
 
-  $("#vagaInfo").innerHTML = `<span class="kicker">Vaga Selecionada</span><h3>${esc(v.titulo)}</h3><p class="muted">${esc(v.desc)}</p><ul>${reqs.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`;
+  vagaInfo.innerHTML = `<span class="kicker">Vaga Selecionada</span><h3>${esc(v.titulo)}</h3><p class="muted">${esc(v.desc)}</p><ul>${reqs.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`;
 }
 
-$("#c_area").addEventListener("change", syncArea);
-$("#c_vaga").addEventListener("change", renderVagaInfo);
-
-/**
- * 8. ENVIO DE FORMULÁRIOS
- */
-$("#formCand").addEventListener("submit", e => {
-  e.preventDefault();
-  const err = $("#c_err");
-  err.hidden = true;
-
-  const d = {
-    nome: $("#c_nome").value.trim(),
-    email: $("#c_email").value.trim(),
-    tel: $("#c_tel").value.trim(),
-    cidade: $("#c_cidade").value.trim(),
-    area: $("#c_area").value,
-    vagaId: $("#c_vaga").value,
-    exp: $("#c_exp").value,
-    porque: $("#c_porque").value.trim()
-  };
-
-  if (d.area === "fabril") {
-    Object.assign(d, { turnos: checked("c_turnos"), nrs: checked("c_nrs"), hab: checked("c_hab"), transp: $("#c_transp").value, campo: $("#c_campo").value });
-  } else {
-    Object.assign(d, { esc: $("#c_esc").value, curso: $("#c_curso").value.trim(), ferr: checked("c_ferr"), pres: $("#c_pres").value, linkedin: $("#c_linkedin").value.trim() });
-  }
-
-  const falta = [];
-  if (!d.nome) falta.push("Nome");
-  if (!/^\S+@\S+\.\S+$/.test(d.email)) falta.push("E-mail válido");
-  if (d.tel.replace(/\D/g, "").length < 10) falta.push("WhatsApp completo");
-  if (!d.cidade) falta.push("Cidade");
-  if (!$("#c_lgpd").checked) falta.push("Aceite da LGPD");
-
-  if (falta.length) {
-    err.textContent = "Preencha os campos obrigatórios: " + falta.join(", ") + ".";
-    err.hidden = false;
-    return;
-  }
-
-  const item = {
-    id: crypto.randomUUID?.() || String(Math.random()),
-    tipo: "candidato",
-    protocolo: protocolo("candidato"),
-    criadoEm: new Date().toISOString(),
-    canal: "Site",
-    status: "Novo",
-    nome: d.nome,
-    email: d.email,
-    tel: d.tel,
-    dados: d,
-    notas: []
-  };
-
-  DB.unshift(item);
-  save();
-  sendWebhook(item);
-
-  const v = VAGAS.find(x => x.id === d.vagaId);
-  $("#formCand").hidden = true;
-  $("#c_done").hidden = false;
-  $("#c_done").innerHTML = `<span class="eyebrow">Candidatura registrada</span><h2>Obrigado, ${esc(d.nome.split(" ")[0])}!</h2><p>Sua vaga: <b>${esc(v ? v.titulo : "")}</b>.</p><span class="proto">${item.protocolo}</span><p class="muted">Retorno em até 48h úteis.</p>`;
-});
-
-$("#formOrc").addEventListener("submit", e => {
-  e.preventDefault();
-  const err = $("#o_err");
-  err.hidden = true;
-
-  const d = {
-    nome: $("#o_nome").value.trim(),
-    cargo: $("#o_cargo").value.trim(),
-    empresa: $("#o_empresa").value.trim(),
-    email: $("#o_email").value.trim(),
-    tel: $("#o_tel").value.trim(),
-    horario: $("#o_horario").value,
-    cidade: $("#o_cidade").value.trim(),
-    tipo: $("#o_tipo").value,
-    fase: $("#o_fase").value,
-    pav: $("#o_pav").value,
-    linhas: checked("o_linhas"),
-    prazo: $("#o_prazo").value,
-    msg: $("#o_msg").value.trim()
-  };
-
-  const falta = [];
-  if (!d.nome) falta.push("Nome");
-  if (!d.empresa) falta.push("Empresa");
-  if (!/^\S+@\S+\.\S+$/.test(d.email)) falta.push("E-mail válido");
-  if (d.tel.replace(/\D/g, "").length < 10) falta.push("Telefone completo");
-  if (!d.cidade) falta.push("Cidade da obra");
-  if (!d.linhas.length) falta.push("Ao menos uma solução");
-  if (!$("#o_lgpd").checked) falta.push("Aceite da LGPD");
-
-  if (falta.length) {
-    err.textContent = "Preencha os campos: " + falta.join(", ") + ".";
-    err.hidden = false;
-    return;
-  }
-
-  const item = {
-    id: crypto.randomUUID?.() || String(Math.random()),
-    tipo: "orcamento",
-    protocolo: protocolo("orcamento"),
-    criadoEm: new Date().toISOString(),
-    canal: "Site",
-    status: "Novo",
-    nome: d.nome,
-    email: d.email,
-    tel: d.tel,
-    dados: d,
-    notas: []
-  };
-
-  DB.unshift(item);
-  save();
-  sendWebhook(item);
-
-  $("#formOrc").hidden = true;
-  $("#o_done").hidden = false;
-  $("#o_done").innerHTML = `<span class="eyebrow">Solicitação registrada</span><h2>Obrigado, ${esc(d.nome.split(" ")[0])}!</h2><p>Orçamento para: <b>${esc(d.empresa)}</b>.</p><span class="proto">${item.protocolo}</span><p class="muted">Contato em até 2h úteis.</p>`;
-});
-
-/**
- * 9. RENDERING DE ROTEIROS E STATUS
- */
-$("#stCand").innerHTML = STATUS.candidato.map(s => `<span class="chip">${esc(s)}</span>`).join("");
-$("#stOrc").innerHTML = STATUS.orcamento.map(s => `<span class="chip">${esc(s)}</span>`).join("");
-
-const scriptHTML = s => `<div class="script"><div class="script-h"><h4>${esc(s.t)}</h4><button class="copy" type="button">Copiar</button></div><pre>${esc(s.x)}</pre></div>`;
-
-function renderScripts(k) {
-  $("#scriptList").innerHTML = SCRIPTS[k].map(scriptHTML).join("");
-}
-
-$$("#scriptTabs .tab").forEach(t => t.addEventListener("click", () => {
-  $$("#scriptTabs .tab").forEach(x => x.setAttribute("aria-selected", x === t));
-  renderScripts(t.dataset.s);
-}));
-
-document.addEventListener("click", e => {
-  const b = e.target.closest(".copy");
-  if (b) copyText(b.closest(".script").querySelector("pre").textContent, b);
-});
-
-function syncManual() {
-  const ok = store.get("mf_manual_ok", null);
-  $("#m_ok").checked = !!ok;
-  $("#m_status").textContent = ok ? "Ciência registrada em " + fmt(ok) + "." : "";
-}
-$("#m_ok").addEventListener("change", () => {
-  store.set("mf_manual_ok", $("#m_ok").checked ? new Date().toISOString() : null);
-  syncManual();
-});
-
-/**
- * 10. AUTHENTICATION (DEMO)
- */
-function entrar(u) {
-  sess.set({ nome: u.nome, cargo: u.cargo, email: u.email });
-  toast("Bem-vindo(a), " + u.nome);
-  location.hash = "#painel";
-}
+if ($("#c_area")) $("#c_area").addEventListener("change", syncArea);
+if ($("#c_vaga")) $("#c_vaga").addEventListener("change", renderVagaInfo);
 
 
 /**
- * 11. GESTÃO E FILA DO PAINEL
+ * ============================================================================
+ * 4. ENVIO DE FORMULÁRIOS (CANDIDATURA E ORÇAMENTO)
+ * 💡 [O QUE VOCÊ PODE MEXER]: 
+ * - Validação e envio dos formulários de vagas e orçamentos.
+ * ============================================================================
  */
-let selId = null;
-const horas = it => (Date.now() - new Date(it.criadoEm)) / 3600e3;
-const atrasado = it => it.status === "Novo" && horas(it) > CONFIG.sla[it.tipo];
-const aberto = it => !FINAIS.includes(it.status);
 
-function assunto(it) {
-  if (it.tipo === "candidato") {
-    const v = VAGAS.find(x => x.id === it.dados.vagaId);
-    return v ? v.titulo : (it.dados.assunto || "Candidatura");
-  }
-  return it.dados.empresa ? `${it.dados.empresa} · ${(it.dados.linhas || []).join(", ")}` : (it.dados.assunto || "Orçamento");
-}
+// Formulário de Candidatura
+const formCand = $("#formCand");
+if (formCand) {
+  formCand.addEventListener("submit", e => {
+    e.preventDefault();
+    const err = $("#c_err");
+    if (err) err.hidden = true;
 
-function pillClass(s) {
-  if (s === "Novo") return "p-novo";
-  if (["Aprovado", "Fechado"].includes(s)) return "p-ok";
-  if (["Não selecionado", "Perdido"].includes(s)) return "p-bad";
-  return "p-and";
-}
+    const d = {
+      nome: $("#c_nome")?.value.trim() || "",
+      email: $("#c_email")?.value.trim() || "",
+      tel: $("#c_tel")?.value.trim() || "",
+      cidade: $("#c_cidade")?.value.trim() || "",
+      area: $("#c_area")?.value || "",
+      vagaId: $("#c_vaga")?.value || "",
+      exp: $("#c_exp")?.value || "",
+      porque: $("#c_porque")?.value.trim() || ""
+    };
 
-function prazoTxt(it) {
-  if (!aberto(it)) return "—";
-  if (it.status !== "Novo") return "Respondido";
-  const rest = CONFIG.sla[it.tipo] - horas(it);
-  return rest < 0 ? `<span class="late">Vencido há ${Math.ceil(-rest)}h</span>` : `${Math.ceil(rest)}h restantes`;
-}
-
-function renderPainel() {
-  const u = sess.get();
-  if (!u) return;
-
-  $("#p_nome").textContent = u.nome;
-  $("#p_cargo").textContent = u.cargo;
-  $("#p_av").textContent = u.nome.trim()[0];
-  $("#p_manual_warn").hidden = !!store.get("mf_manual_ok", null);
-
-  const hoje = new Date().toDateString();
-  $("#k_abertos").textContent = DB.filter(aberto).length;
-  $("#k_atraso").textContent = DB.filter(atrasado).length;
-  $("#k_hoje").textContent = DB.filter(i => new Date(i.criadoEm).toDateString() === hoje).length;
-  $("#k_concl").textContent = DB.filter(i => !aberto(i)).length;
-
-  const ft = $("#f_tipo").value, fs = $("#f_status").value, q = $("#f_busca").value.trim().toLowerCase();
-
-  const list = DB.filter(i => (!ft || i.tipo === ft)
-    && (fs === "todos" || (fs === "abertos" && aberto(i)) || (fs === "atraso" && atrasado(i)) || (fs === "concluidos" && !aberto(i)))
-    && (!q || [i.nome, i.protocolo, assunto(i), i.dados.empresa].join(" ").toLowerCase().includes(q)))
-    .sort((a, b) => (atrasado(b) - atrasado(a)) || (new Date(b.criadoEm) - new Date(a.criadoEm)));
-
-  $("#q_empty").hidden = list.length > 0;
-  $("#q_body").innerHTML = list.map(i => {
-    const ad = i.tipo === "candidato" && i.dados.vagaId ? aderencia(i.dados).score : null;
-    return `<tr data-id="${i.id}" class="${i.id === selId ? "sel" : ""}" tabindex="0">
-      <td style="white-space:nowrap">${esc(i.protocolo)}</td>
-      <td><span class="typ ${i.tipo === "orcamento" ? "o" : ""}">${i.tipo === "candidato" ? "Candidato" : "Orçamento"}</span></td>
-      <td>${esc(i.nome)}<br><small class="muted">${esc(i.canal)} · ${fmt(i.criadoEm)}</small></td>
-      <td>${esc(assunto(i))}</td>
-      <td>${ad === null ? "—" : `<div style="display:flex;align-items:center;gap:8px"><div class="meter"><i style="width:${ad}%;background:${corAder(ad)}"></i></div><b>${ad}%</b></div>`}</td>
-      <td><span class="pill ${pillClass(i.status)}">${esc(i.status)}</span></td>
-      <td style="white-space:nowrap">${prazoTxt(i)}</td>
-    </tr>`;
-  }).join("");
-
-  renderDetail();
-}
-
-["#f_tipo", "#f_status"].forEach(s => $(s).addEventListener("change", renderPainel));
-$("#f_busca").addEventListener("input", renderPainel);
-
-$("#q_body").addEventListener("click", e => {
-  const tr = e.target.closest("tr[data-id]");
-  if (tr) {
-    selId = tr.dataset.id;
-    renderPainel();
-    if (innerWidth < 1000) $("#detail").scrollIntoView({ behavior: "smooth" });
-  }
-});
-
-$("#p_novo").addEventListener("click", () => location.hash = "#novo");
-
-/**
- * 12. DETALHES DO ATENDIMENTO SELECIONADO
- */
-function linha(k, v) {
-  return v && (!Array.isArray(v) || v.length) ? `<dt>${esc(k)}</dt><dd>${esc(Array.isArray(v) ? v.join(", ") : v)}</dd>` : "";
-}
-
-function renderDetail() {
-  const it = DB.find(i => i.id === selId);
-  if (!it) {
-    $("#detail").innerHTML = `<div class="empty">Selecione um atendimento na fila para ver os detalhes.</div>`;
-    return;
-  }
-
-  const d = it.dados, isC = it.tipo === "candidato";
-  let dados = linha("E-mail", it.email) + linha("Telefone", it.tel) + linha("Canal", it.canal) + linha("Recebido em", fmt(it.criadoEm));
-  let extra = "";
-
-  if (isC) {
-    const v = VAGAS.find(x => x.id === d.vagaId);
-    dados += linha("Vaga", v ? v.titulo : d.assunto) + linha("Cidade", d.cidade) + linha("Experiência", { 0: "Nenhuma", 1: "Até 1 ano", 2: "1 a 3 anos", 4: "3 a 5 anos", 6: "Mais de 5 anos" }[d.exp])
-      + linha("Turnos", d.turnos) + linha("NRs", d.nrs) + linha("Habilidades", d.hab) + linha("Motivação", d.porque);
-
-    if (d.vagaId) {
-      const a = aderencia(d);
-      extra = `<div><span class="kicker">Aderência à Vaga</span>
-        <div style="display:flex;align-items:center;gap:12px;margin:8px 0">
-          <strong style="font-family:var(--display);font-size:2.2rem;color:${corAder(a.score)}">${a.score}%</strong>
-          <div class="meter" style="flex:1"><i style="width:${a.score}%;background:${corAder(a.score)}"></i></div>
-        </div>
-        <dl class="dl">${a.itens.map(x => `<dt>${esc(x.nome)}</dt><dd>${x.pts} de ${x.peso}</dd>`).join("")}</dl>
-      </div>`;
+    if (d.area === "fabril") {
+      Object.assign(d, { turnos: checked("c_turnos"), nrs: checked("c_nrs"), hab: checked("c_hab"), transp: $("#c_transp")?.value, campo: $("#c_campo")?.value });
+    } else {
+      Object.assign(d, { esc: $("#c_esc")?.value, curso: $("#c_curso")?.value.trim(), ferr: checked("c_ferr"), pres: $("#c_pres")?.value, linkedin: $("#c_linkedin")?.value.trim() });
     }
-  } else {
-    dados += linha("Empresa", d.empresa) + linha("Cargo", d.cargo) + linha("Obra", d.cidade) + linha("Soluções", d.linhas) + linha("Observações", d.msg);
-    if (d.prazo === "urgente") extra = `<div><span class="pill p-bad">Prioridade Alta</span> <span class="muted" style="font-size:.9rem">Entrega em até 15 dias.</span></div>`;
-  }
 
-  const ck = (it.check || []);
-  const scripts = SCRIPTS[isC ? "cand" : "orc"];
-  const fill = s => s.replaceAll("[nome]", it.nome.split(" ")[0]).replaceAll("[protocolo]", it.protocolo).replaceAll("[seu nome]", sess.get()?.nome || "Atendente").replaceAll("[cidade]", d.cidade || "sua região");
+    const falta = [];
+    if (!d.nome) falta.push("Nome");
+    if (!/^\S+@\S+\.\S+$/.test(d.email)) falta.push("E-mail válido");
+    if (d.tel.replace(/\D/g, "").length < 10) falta.push("WhatsApp completo");
+    if (!d.cidade) falta.push("Cidade");
+    if ($("#c_lgpd") && !$("#c_lgpd").checked) falta.push("Aceite da LGPD");
 
-  $("#detail").innerHTML = `
-    <div style="display:grid;gap:8px">
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-        <span class="typ ${isC ? "" : "o"}">${isC ? "Candidato" : "Orçamento"}</span>
-        <span style="font-family:var(--display);font-weight:800">${esc(it.protocolo)}</span>
-      </div>
-      <h3>${esc(it.nome)}</h3>
-      <label class="f" style="margin-top:6px">Status
-        <select id="d_status">${STATUS[it.tipo].map(s => `<option ${s === it.status ? "selected" : ""}>${s}</option>`).join("")}</select>
-      </label>
-    </div>
-    ${extra}
-    <div><span class="kicker">Informações</span><dl class="dl" style="margin-top:8px">${dados}</dl></div>
-    <div><span class="kicker">Checklist de Conformidade</span>
-      <div class="checklist" style="margin-top:8px">${CHECKLIST[it.tipo].map((c, i) => `<label><input type="checkbox" data-ck="${i}" ${ck.includes(i) ? "checked" : ""}> ${esc(c)}</label>`).join("")}</div>
-    </div>
-    <div style="display:grid;gap:10px"><span class="kicker">Roteiros Adaptados</span>${scripts.map(s => scriptHTML({ t: s.t, x: fill(s.x) })).join("")}</div>
-    <div style="display:grid;gap:10px"><span class="kicker">Histórico de Interações</span>
-      <div class="notes">${it.notas.length ? it.notas.map(n => `<div class="note"><small>${fmt(n.quando)} · ${esc(n.autor)}</small><br>${esc(n.texto)}</div>`).join("") : '<p class="muted">Sem notas cadastradas.</p>'}</div>
-      <label class="f">Novo Registro<textarea id="d_nota" placeholder="Digite aqui o andamento..."></textarea></label>
-      <button class="btn sm" type="button" id="d_add" style="justify-self:start">Salvar Registro</button>
-    </div>`;
+    if (falta.length) {
+      if (err) {
+        err.textContent = "Preencha os campos obrigatórios: " + falta.join(", ") + ".";
+        err.hidden = false;
+      }
+      return;
+    }
 
-  $("#d_status").addEventListener("change", e => {
-    const de = it.status;
-    it.status = e.target.value;
-    it.notas.unshift({ quando: new Date().toISOString(), autor: sess.get().nome, texto: `Status alterado: ${de} → ${it.status}` });
-    save();
-    sendWebhook({ evento: "status", protocolo: it.protocolo, status: it.status });
-    toast("Status atualizado");
-    renderPainel();
+    const item = {
+      id: crypto.randomUUID?.() || String(Math.random()),
+      tipo: "candidato",
+      criadoEm: new Date().toISOString(),
+      canal: "Site",
+      status: "Novo",
+      nome: d.nome,
+      email: d.email,
+      tel: d.tel,
+      dados: d,
+      notas: []
+    };
+
+    const v = VAGAS.find(x => x.id === d.vagaId);
+    formCand.hidden = true;
+    const doneBox = $("#c_done");
+    if (doneBox) {
+      doneBox.hidden = false;
+      doneBox.innerHTML = `<span class="eyebrow">Candidatura registrada</span><h2>Obrigado, ${esc(d.nome.split(" ")[0])}!</h2><p>Sua vaga: <b>${esc(v ? v.titulo : "")}</b>.</p><span class="proto">${item.protocolo}</span><p class="muted">Retorno em até 48h úteis.</p>`;
+    }
   });
+}
 
-  $$("#detail [data-ck]").forEach(c => c.addEventListener("change", () => {
-    it.check = $$("#detail [data-ck]:checked").map(x => Number(x.dataset.ck));
-    save();
-  }));
+// Formulário de Orçamento
+const formOrc = $("#formOrc");
+if (formOrc) {
+  formOrc.addEventListener("submit", e => {
+    e.preventDefault();
+    const err = $("#o_err");
+    if (err) err.hidden = true;
 
-  $("#d_add").addEventListener("click", () => {
-    const t = $("#d_nota").value.trim();
-    if (!t) return;
-    it.notas.unshift({ quando: new Date().toISOString(), autor: sess.get().nome, texto: t });
-    save();
-    toast("Registro salvo");
-    renderDetail();
+    const d = {
+      nome: $("#o_nome")?.value.trim() || "",
+      cargo: $("#o_cargo")?.value.trim() || "",
+      empresa: $("#o_empresa")?.value.trim() || "",
+      email: $("#o_email")?.value.trim() || "",
+      tel: $("#o_tel")?.value.trim() || "",
+      horario: $("#o_horario")?.value || "",
+      cidade: $("#o_cidade")?.value.trim() || "",
+      tipo: $("#o_tipo")?.value || "",
+      fase: $("#o_fase")?.value || "",
+      pav: $("#o_pav")?.value || "",
+      linhas: checked("o_linhas"),
+      prazo: $("#o_prazo")?.value || "",
+      msg: $("#o_msg")?.value.trim() || ""
+    };
+
+    const falta = [];
+    if (!d.nome) falta.push("Nome");
+    if (!d.empresa) falta.push("Empresa");
+    if (!/^\S+@\S+\.\S+$/.test(d.email)) falta.push("E-mail válido");
+    if (d.tel.replace(/\D/g, "").length < 10) falta.push("Telefone completo");
+    if (!d.cidade) falta.push("Cidade da obra");
+    if (!d.linhas.length) falta.push("Ao menos uma solução");
+    if ($("#o_lgpd") && !$("#o_lgpd").checked) falta.push("Aceite da LGPD");
+
+    if (falta.length) {
+      if (err) {
+        err.textContent = "Preencha os campos: " + falta.join(", ") + ".";
+        err.hidden = false;
+      }
+      return;
+    }
+
+    const item = {
+      id: crypto.randomUUID?.() || String(Math.random()),
+      tipo: "orcamento",
+      criadoEm: new Date().toISOString(),
+      canal: "Site",
+      status: "Novo",
+      nome: d.nome,
+      email: d.email,
+      tel: d.tel,
+      dados: d,
+      notas: []
+    };
+
+    formOrc.hidden = true;
+    const doneBox = $("#o_done");
+    if (doneBox) {
+      doneBox.hidden = false;
+      doneBox.innerHTML = `<span class="eyebrow">Solicitação registrada</span><h2>Obrigado, ${esc(d.nome.split(" ")[0])}!</h2><p>Orçamento para: <b>${esc(d.empresa)}</b>.</p><span class="proto">${item.protocolo}</span><p class="muted">Contato em até 2h úteis.</p>`;
+    }
   });
 }
 
 /**
- * 13. REGISTRO MANUAL DE CONTATO
- */
-$("#formNovo").addEventListener("submit", e => {
-  e.preventDefault();
-  const nome = $("#n_nome").value.trim();
-  const contato = $("#n_contato").value.trim();
-
-  if (!nome || !contato) {
-    $("#n_err").textContent = "Preencha o nome e o canal de contato.";
-    $("#n_err").hidden = false;
-    return;
-  }
-
-  $("#n_err").hidden = true;
-  const tipo = $("#n_tipo").value;
-  const isEmail = contato.includes("@");
-
-  const item = {
-    id: crypto.randomUUID?.() || String(Math.random()),
-    tipo,
-    protocolo: protocolo(tipo),
-    criadoEm: new Date().toISOString(),
-    canal: $("#n_canal").value,
-    status: "Novo",
-    nome,
-    email: isEmail ? contato : "",
-    tel: isEmail ? "" : contato,
-    dados: { assunto: $("#n_assunto").value.trim(), resumo: $("#n_resumo").value.trim() },
-    notas: [{ quando: new Date().toISOString(), autor: sess.get().nome, texto: "Registro manual via " + $("#n_canal").value }]
-  };
-
-  DB.unshift(item);
-  save();
-  sendWebhook(item);
-  selId = item.id;
-  $("#formNovo").reset();
-  toast("Protocolo " + item.protocolo + " criado com sucesso");
-  location.hash = "#painel";
-});
-
-/**
- * 14. INICIALIZAÇÃO DA APLICAÇÃO
+ * ============================================================================
+ * 5. INICIALIZAÇÃO DA PÁGINA
+ * 💡 [DICA]: Executa as funções principais logo que o site carrega.
+ * ============================================================================
  */
 syncArea();
 renderVagas();
-renderScripts("cand");
-syncManual();
 route();
-setInterval(() => {
-  if (!$('[data-page="painel"]').hidden) renderPainel();
-}, 60000);
