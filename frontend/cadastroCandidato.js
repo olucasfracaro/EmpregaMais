@@ -1,7 +1,13 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 import { API_BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let supabaseClientPromise;
+async function getSupabaseClient() {
+    if (!supabaseClientPromise) {
+        supabaseClientPromise = import("https://esm.sh/@supabase/supabase-js@2")
+            .then(({ createClient }) => createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
+    }
+    return supabaseClientPromise;
+}
 
 export async function uploadCurriculo(file) {
     if (!file) return "";
@@ -18,6 +24,7 @@ export async function uploadCurriculo(file) {
     const extension = originalExtension || "pdf";
     const fileName = `${dateStamp}_${Math.random().toString(36).substring(2, 8)}.${extension}`;
 
+    const supabase = await getSupabaseClient();
     const { data: uploadData, error } = await supabase.storage
         .from("curriculos")
         .upload(fileName, file, {

@@ -10,6 +10,8 @@
   <link rel="icon" type="image/png" href="ico.png">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="style.css">
+  <script src="nav.js" defer></script>
+  <script src="masks.js" defer></script>
   <script type="module" src="script.js"></script>
 </head>
 <body>
@@ -148,7 +150,7 @@
                     <label class="f">E-mail <span class="req">*</span><input type="email" id="c_email" required autocomplete="email"></label>
                   </div>
                   <div class="row">
-                    <label class="f">WhatsApp <span class="req">*</span><input type="tel" id="c_tel" required placeholder="(11) 90000-0000" autocomplete="tel"></label>
+                    <label class="f">WhatsApp <span class="req">*</span><input type="tel" id="c_tel" data-mask="phone-br" inputmode="tel" maxlength="20" required placeholder="(11) 90000-0000" autocomplete="tel-national"></label>
                     <label class="f">Cidade / bairro <span class="req">*</span><input type="text" id="c_cidade" required placeholder="Ex.: Guarulhos, Centro"></label>
                   </div>
                 </fieldset>
@@ -295,7 +297,7 @@
                     <label class="f">E-mail <span class="req">*</span><input type="email" id="o_email" required autocomplete="email"></label>
                   </div>
                   <div class="row">
-                    <label class="f">Celular / WhatsApp <span class="req">*</span><input type="tel" id="o_tel" required placeholder="(11) 90000-0000" autocomplete="tel"></label>
+                    <label class="f">Celular / WhatsApp <span class="req">*</span><input type="tel" id="o_tel" data-mask="phone-br" inputmode="tel" maxlength="20" required placeholder="(11) 90000-0000" autocomplete="tel-national"></label>
                     <label class="f">Horário para contato
                       <select id="o_horario"><option>Manhã</option><option>Tarde</option><option>Qualquer horário</option></select>
                     </label>
@@ -377,27 +379,6 @@
               </tbody>
             </table>
           </div>
-        </div>
-      </section>
-
-      <section class="band-white">
-        <div class="wrap">
-          <div class="head"><h2>Status padronizados</h2></div>
-          <div class="grid g2">
-            <div class="box"><span class="kicker">Candidatos</span><div class="chips" id="stCand"></div></div>
-            <div class="box"><span class="kicker">Orçamentos</span><div class="chips" id="stOrc"></div></div>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="wrap">
-          <div class="head"><h2>Roteiros operacionais</h2></div>
-          <div class="tabs" role="tablist" id="scriptTabs">
-            <button class="tab" role="tab" aria-selected="true" data-s="cand">Candidatos</button>
-            <button class="tab" role="tab" aria-selected="false" data-s="orc">Orçamentos</button>
-          </div>
-          <div class="grid g2" id="scriptList"></div>
         </div>
       </section>
     </div>

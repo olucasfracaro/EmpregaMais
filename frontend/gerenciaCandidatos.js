@@ -136,9 +136,9 @@ if (logoutBtn) {
 function formatPhone(phoneDigits) {
     if (!phoneDigits) return '(00) 00000-0000';
     const cleaned = ('' + phoneDigits).replace(/\D/g, '');
-    const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})\$/);
+    const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/);
     if (match) return `(${match[1]}) ${match[2]}-${match[3]}`;
-    const matchShort = cleaned.match(/^(\d{2})(\d{4})(\d{4})\$/);
+    const matchShort = cleaned.match(/^(\d{2})(\d{4})(\d{4})$/);
     if (matchShort) return `(${matchShort[1]}) ${matchShort[2]}-${matchShort[3]}`;
     return phoneDigits;
 }

@@ -20,7 +20,7 @@
 
     <div class="campo-grupo">
       <label for="Telefone">Telefone</label>
-      <input type="tel" id="Telefone" placeholder="(00) 00000-0000" required>
+      <input type="tel" id="Telefone" data-mask="phone-br" inputmode="tel" maxlength="20" placeholder="(00) 00000-0000" autocomplete="tel-national" required>
     </div>
 
     <div class="campo-grupo">
@@ -40,6 +40,7 @@
 
     <button type="submit" class="btn-cadastrar">Enviar</button>
   </form>
+  <script src="masks.js" defer></script>
   <script type="module" src="cadastroCandidato.js"></script>
 </body>
 </html>

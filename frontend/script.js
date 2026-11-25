@@ -41,52 +41,6 @@ const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const checked = id => $$("#" + id + " input:checked").map(i => i.value);
 
-function route() {
-  const hash = location.hash.slice(1) || "inicio";
-  const pages = $$("[data-page]");
-
-  const target = pages.find(p => p.dataset.page === hash)
-    || pages.find(p => p.dataset.page === "inicio");
-
-  if (!target) return;
-
-  pages.forEach(page => {
-    page.hidden = page !== target;
-  });
-
-  $$(".nav a[data-r]").forEach(link => {
-    const active = link.dataset.r === target.dataset.page;
-
-    link.classList.toggle("active", active);
-    link.setAttribute("aria-current", active ? "page" : "false");
-  });
-
-  // Fecha o menu mobile após navegar
-  if (menuBtn && nav) {
-    menuBtn.setAttribute("aria-expanded", "false");
-    nav.classList.remove("open");
-  }
-
-  window.scrollTo({
-    top: 0,
-    behavior: "instant"
-  });
-}
-
-window.addEventListener("hashchange", route);
-
-const menuBtn = $("#menuBtn");
-const nav = $("#nav");
-
-if (menuBtn && nav) {
-  menuBtn.addEventListener("click", () => {
-    const expanded = menuBtn.getAttribute("aria-expanded") === "true";
-
-    menuBtn.setAttribute("aria-expanded", String(!expanded));
-    nav.classList.toggle("open", !expanded);
-  });
-}
-
 /**
  * ============================================================================
  * 3. LÓGICA DA SEÇÃO TRABALHE CONOSCO (VAGAS)
@@ -254,7 +208,7 @@ if (formCand) {
       const doneBox = $("#c_done");
       if (doneBox) {
         doneBox.hidden = false;
-        doneBox.innerHTML = `<span class="eyebrow">Candidatura registrada</span><h2>Obrigado, ${esc(d.nome.split(" ")[0])}!</h2><p>Sua vaga: <b>${esc(v ? v.titulo : "")}</b>.</p><span class="proto">Protocolo: ${esc(candidato.id ?? "")}</span><p class="muted">Retorno em até 48h úteis.</p>`;
+        doneBox.innerHTML = `<span class="eyebrow">Candidatura registrada</span><h2>Obrigado, ${esc(d.nome.split(" ")[0])}!</h2><p>Sua vaga: <b>${esc(v ? v.titulo : "")}</b>.</p><span class="proto">Nº da Candidatura: ${esc(candidato.id ?? "")}</span><p class="muted">Retorno em até 48h úteis.</p>`;
       }
     } catch (error) {
       console.error(error);
@@ -316,7 +270,7 @@ if (formOrc) {
       const doneBox = $("#o_done");
       if (doneBox) {
         doneBox.hidden = false;
-        doneBox.innerHTML = `<span class="eyebrow">Solicitação registrada</span><h2>Obrigado, ${esc(solicitante.nome.split(" ")[0])}!</h2><p>Orçamento para: <b>${esc(solicitante.empresa)}</b>.</p><span class="proto">Protocolo: ${esc(resposta.id ?? "")}</span><p class="muted">Contato em até 2h úteis.</p>`;
+        doneBox.innerHTML = `<span class="eyebrow">Solicitação registrada</span><h2>Obrigado, ${esc(solicitante.nome.split(" ")[0])}!</h2><p>Orçamento para: <b>${esc(solicitante.empresa)}</b>.</p><span class="proto">Nº da Solicitação: ${esc(resposta.id ?? "")}</span><p class="muted">Contato em até 2h úteis.</p>`;
       }
     } catch (error) {
       console.error(error);
@@ -331,4 +285,3 @@ if (formOrc) {
 
 syncArea();
 renderVagas();
-route();
