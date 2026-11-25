@@ -32,4 +32,12 @@ public class PageController {
         }
         return "redirect:" + frontendUrl + "/principal";
     }
+
+    @GetMapping("/cadastro")
+    public String cadastroPage() {
+        if (isLocal) {
+            return "forward:/cadastro.html";
+        }
+        return "redirect:" + frontendUrl + "/cadastro";
+    }
 }

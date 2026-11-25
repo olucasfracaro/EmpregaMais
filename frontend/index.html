@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="ico.png">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
+  <script type="module" src="script.js"></script>
 </head>
 <body>
 
@@ -243,6 +243,7 @@
                 <fieldset>
                   <legend><span>4</span> Motivação</legend>
                   <label class="f">Por que quer trabalhar conosco?<textarea id="c_porque" placeholder="Breve resumo..."></textarea></label>
+                  <label class="f">Currículo em PDF <span class="req">*</span><input type="file" id="c_curriculo" accept="application/pdf,.pdf" required></label>
                   <label class="consent"><input type="checkbox" id="c_lgpd"> Autorizo o uso dos meus dados para a vaga e banco de talentos (LGPD).</label>
                 </fieldset>
 

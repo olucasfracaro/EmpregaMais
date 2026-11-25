@@ -205,7 +205,7 @@ function normalizarDados(dados) {
 
 async function receberDadosComFallback() {
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/candidatos`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/gerenciar/candidatos`, {
             method: "GET",
             headers: { "Content-Type": "application/json" }
         });
@@ -275,7 +275,7 @@ function descartarAlteracoesPendentes() {
 
 async function atualizarStatusComFallback(id, status) {
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/candidato/${id}`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/gerenciar/candidatos/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status })
@@ -317,7 +317,7 @@ async function confirmarAlteracoes() {
                 if (storageError) throw storageError;
             }
 
-            const response = await authenticatedFetch(`${API_BASE_URL}/candidato/${id}`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/gerenciar/candidatos/${id}`, {
                 method: 'DELETE'
             });
             if (!response.ok) {
@@ -790,7 +790,7 @@ async function verificarStatusApi() {
     const timeout = setTimeout(() => controller.abort(), 8000);
 
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/candidatos`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/gerenciar/candidatos`, {
             method: 'GET',
             signal: controller.signal,
             headers: { 'Content-Type': 'application/json' }
@@ -856,7 +856,7 @@ async function carregarAnalises() {
     if (!analysisGrid) return;
 
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/analises`);
+        const response = await authenticatedFetch(`${API_BASE_URL}/acompanhar/analises`);
         if (!response.ok) throw new Error(`Erro ao buscar análises: ${response.status}`);
 
         const analises = await response.json();

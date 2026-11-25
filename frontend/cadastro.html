@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro - EmpregaMais</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="ico.png">
+</head>
+<body>
+  <form class="painel" id="PainelManeiro">
+    <header class="painel-header">
+      <h1>Cadastro</h1>
+    </header>
+
+    <div class="campo-grupo">
+      <label for="Nome">Nome</label>
+      <input type="text" id="Nome" placeholder="Seu nome completo" required>
+    </div>
+
+    <div class="campo-grupo">
+      <label for="Telefone">Telefone</label>
+      <input type="tel" id="Telefone" placeholder="(00) 00000-0000" required>
+    </div>
+
+    <div class="campo-grupo">
+      <label for="Email">E-mail</label>
+      <input type="email" id="Email" placeholder="seu@email.com" required>
+    </div>
+
+    <div class="campo-grupo">
+      <label for="Mensagem">Mensagem</label>
+      <textarea id="Mensagem" placeholder="Escreva sua mensagem aqui..." required></textarea>
+    </div>
+
+    <div class="campo-grupo">
+      <label for="Currículo">Currículo em PDF</label>
+      <input type="file" id="Currículo" name="Currículo" accept="application/pdf" required>
+    </div>
+
+    <button type="submit" class="btn-cadastrar">Enviar</button>
+  </form>
+  <script type="module" src="cadastroCandidato.js"></script>
+</body>
+</html>

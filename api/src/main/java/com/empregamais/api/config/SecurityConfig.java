@@ -38,6 +38,7 @@ public class SecurityConfig {
                     "/ico.png",
                     "/index.html",
                     "/login.html",
+                    "/cadastro.html",
                     "/principal.html",
                     "/script.js",
                     "/loginUsuario.js",
@@ -48,15 +49,24 @@ public class SecurityConfig {
                     "/config.js",
                     "/config.local.js",
                     "/login",
-                    "/principal"
+                    "/principal",
+                    "/cadastro",
+                    "/cadastroCandidato.js"
                 ).permitAll()
-                .requestMatchers(HttpMethod.POST, "/candidato").permitAll()
-                .requestMatchers("/candidatos", "/candidatos/**", "/candidato/**")
+                .requestMatchers(HttpMethod.POST, "/gerenciar/candidatos").permitAll()
+                .requestMatchers(HttpMethod.POST, "/comercial/orcamentos/solicitacao").permitAll()
+                .requestMatchers("/gerenciar/candidatos", "/gerenciar/candidatos/**")
                     .hasAnyAuthority("ROLE_ADMIN", "ROLE_GESTOR", "ROLE_RH")
-                .requestMatchers("/analise", "/analise/**", "/analises", "/analises/**")
+                .requestMatchers("/acompanhar/analises", "/acompanhar/analises/**")
                     .hasAnyAuthority("ROLE_ADMIN", "ROLE_MONITOR")
                 .requestMatchers("/acompanhar", "/acompanhar/**")
                     .hasAnyAuthority("ROLE_ADMIN", "ROLE_MONITOR")
+                .requestMatchers(
+                    "/comercial/solicitantes",
+                    "/comercial/solicitantes/**",
+                    "/comercial/orcamentos",
+                    "/comercial/orcamentos/**"
+                ).hasAnyAuthority("ROLE_ADMIN", "ROLE_COMERCIAL")
                 .requestMatchers("/comercial", "/comercial/**", "/comerciais/**")
                     .hasAnyAuthority("ROLE_ADMIN", "ROLE_COMERCIAL")
                 .requestMatchers(

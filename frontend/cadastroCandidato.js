@@ -3,20 +3,19 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { API_BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-async function uploadCurriculo(file) {
+export async function uploadCurriculo(file) {
     if (!file) return "";
 
     const isPdf = file.type === "application/pdf";
-    const isImage = file.type.startsWith("image/");
-    if (!isPdf && !isImage) {
-        throw new Error("Envie um currículo em PDF ou imagem.");
+    if (!isPdf) {
+        throw new Error("Envie o currículo em PDF.");
     }
 
     const dateStamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const originalExtension = file.name.includes(".")
         ? file.name.split(".").pop().toLowerCase().replace(/[^a-z0-9]/g, "")
-        : "img";
-    const extension = originalExtension || "img";
+        : "pdf";
+    const extension = originalExtension || "pdf";
     const fileName = `${dateStamp}_${Math.random().toString(36).substring(2, 8)}.${extension}`;
 
     const { data: uploadData, error } = await supabase.storage
@@ -34,9 +33,10 @@ async function uploadCurriculo(file) {
     return uploadData.path;
 }
 
-async function enviarCandidatoComFallback(payload) {
+export async function enviarCandidato(payload) {
+    let response;
     try {
-        return await fetch(`${API_BASE_URL}/candidato`, {
+        response = await fetch(`${API_BASE_URL}/gerenciar/candidatos`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -44,6 +44,16 @@ async function enviarCandidatoComFallback(payload) {
     } catch (error) {
         throw new Error("Não foi possível conectar à API", { cause: error });
     }
+
+    if (!response.ok) {
+        let message = `Erro ao cadastrar: ${response.status}`;
+        try {
+            const body = await response.json();
+            message = body.detail || body.message || body.title || message;
+        } catch {}
+        throw new Error(message);
+    }
+    return response;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -62,20 +72,13 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const curriculoPath = await uploadCurriculo(Curriculo);
 
-            const response = await enviarCandidatoComFallback({
+            const response = await enviarCandidato({
                 nome: Nome,
                 telefone: Telefone,
                 email: Email,
                 mensagem: Mensagem,
                 curriculo_path: curriculoPath
             });
-
-            if (response.status === 403 || response.status === 409) {
-                throw new Error("E-mail já cadastrado");
-            }
-            if (!response.ok) {
-                throw new Error("Erro ao cadastrar: " + response.status);
-            }
 
             alert("Cadastro realizado com sucesso!");
             this.reset();

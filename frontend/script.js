@@ -1,11 +1,6 @@
-/**
- * ============================================================================
- * 1. CONFIGURAÇÕES E ESTADO GLOBAL
- * 💡 [O QUE VOCÊ PODE MEXER]: 
- * - VAGAS: Aqui você adiciona, remove ou edita as vagas que aparecem no site. 
- *   Basta respeitar a estrutura (id, area, titulo, local, req e desc).
- * ============================================================================
- */
+import { enviarCandidato, uploadCurriculo } from "./cadastroCandidato.js";
+import { enviarOrcamento } from "./envioOrcamento.js";
+
 const VAGAS = [
   { id: "op", area: "fabril", titulo: "Operador(a) de Produção", local: "Fábrica", req: { exp: 0, nrs: ["NR-12"], hab: ["Ferramentas manuais e elétricas"], turno: true }, desc: "Operação de máquinas e montagem de peças metálicas." },
   { id: "sol", area: "fabril", titulo: "Soldador(a)", local: "Fábrica", req: { exp: 2, nrs: ["NR-12"], hab: ["Solda MIG/MAG", "Leitura de desenho técnico"], turno: true }, desc: "Soldagem de estruturas metálicas conforme desenho técnico." },
@@ -41,62 +36,61 @@ const SCRIPTS = {
   ]
 };
 
-/**
- * ============================================================================
- * 2. UTILITÁRIOS E ROTEAMENTO (MENU / NAVEGAÇÃO)
- * 💡 [O QUE VOCÊ PODE MEXER]: 
- * - É aqui que a mágica do sublinhado vermelho acontece. A função `route` verifica 
- *   qual é a página atual e coloca a classe `active` no link correspondente do menu.
- * ============================================================================
- */
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const checked = id => $$("#" + id + " input:checked").map(i => i.value);
 
-// 💡 [DICA]: Faz a troca de telas e gerencia o sublinhado vermelho (classe `active` no menu)
 function route() {
-  const hash = location.hash.replace("#", "") || "inicio";
+  const hash = location.hash.slice(1) || "inicio";
   const pages = $$("[data-page]");
-  
-  let target = pages.find(p => p.dataset.page === hash);
-  if (!target) {
-    target = pages.find(p => p.dataset.page === "inicio");
-  }
 
-  pages.forEach(p => p.hidden = p !== target);
-  
-  // 💡 [IMPORTANTE PARA O SUBLINHADO]: Percorre os links do menu e ativa/desativa a classe `active`
-  $$(".nav a").forEach(a => {
-    const href = a.getAttribute("href");
-    if (href === "#" + hash) {
-      a.classList.add("active");
-    } else {
-      a.classList.remove("active");
-    }
+  const target = pages.find(p => p.dataset.page === hash)
+    || pages.find(p => p.dataset.page === "inicio");
+
+  if (!target) return;
+
+  pages.forEach(page => {
+    page.hidden = page !== target;
   });
 
-  window.scrollTo(0, 0);
+  $$(".nav a[data-r]").forEach(link => {
+    const active = link.dataset.r === target.dataset.page;
+
+    link.classList.toggle("active", active);
+    link.setAttribute("aria-current", active ? "page" : "false");
+  });
+
+  // Fecha o menu mobile após navegar
+  if (menuBtn && nav) {
+    menuBtn.setAttribute("aria-expanded", "false");
+    nav.classList.remove("open");
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: "instant"
+  });
 }
 
 window.addEventListener("hashchange", route);
 
-// Botão de menu mobile (celular)
 const menuBtn = $("#menuBtn");
 const nav = $("#nav");
+
 if (menuBtn && nav) {
   menuBtn.addEventListener("click", () => {
     const expanded = menuBtn.getAttribute("aria-expanded") === "true";
-    menuBtn.setAttribute("aria-expanded", !expanded);
-    nav.classList.toggle("open");
+
+    menuBtn.setAttribute("aria-expanded", String(!expanded));
+    nav.classList.toggle("open", !expanded);
   });
 }
 
 /**
  * ============================================================================
  * 3. LÓGICA DA SEÇÃO TRABALHE CONOSCO (VAGAS)
- * 💡 [O QUE VOCÊ PODE MEXER]: 
- * - Renderiza dinamicamente os cards de vagas na tela com base na lista `VAGAS`.
+ * - Renderiza dinamicamente os cards de vagas na tela.
  * ============================================================================
  */
 let areaAtual = "fabril";
@@ -183,15 +177,13 @@ if ($("#c_vaga")) $("#c_vaga").addEventListener("change", renderVagaInfo);
 /**
  * ============================================================================
  * 4. ENVIO DE FORMULÁRIOS (CANDIDATURA E ORÇAMENTO)
- * 💡 [O QUE VOCÊ PODE MEXER]: 
- * - Validação e envio dos formulários de vagas e orçamentos.
  * ============================================================================
  */
 
 // Formulário de Candidatura
 const formCand = $("#formCand");
 if (formCand) {
-  formCand.addEventListener("submit", e => {
+  formCand.addEventListener("submit", async e => {
     e.preventDefault();
     const err = $("#c_err");
     if (err) err.hidden = true;
@@ -200,6 +192,7 @@ if (formCand) {
       nome: $("#c_nome")?.value.trim() || "",
       email: $("#c_email")?.value.trim() || "",
       tel: $("#c_tel")?.value.trim() || "",
+      curriculo: $("#c_curriculo")?.files?.[0] || null,
       cidade: $("#c_cidade")?.value.trim() || "",
       area: $("#c_area")?.value || "",
       vagaId: $("#c_vaga")?.value || "",
@@ -218,6 +211,7 @@ if (formCand) {
     if (!/^\S+@\S+\.\S+$/.test(d.email)) falta.push("E-mail válido");
     if (d.tel.replace(/\D/g, "").length < 10) falta.push("WhatsApp completo");
     if (!d.cidade) falta.push("Cidade");
+    if (!d.curriculo) falta.push("Currículo em PDF");
     if ($("#c_lgpd") && !$("#c_lgpd").checked) falta.push("Aceite da LGPD");
 
     if (falta.length) {
@@ -228,25 +222,46 @@ if (formCand) {
       return;
     }
 
-    const item = {
-      id: crypto.randomUUID?.() || String(Math.random()),
-      tipo: "candidato",
-      criadoEm: new Date().toISOString(),
-      canal: "Site",
-      status: "Novo",
-      nome: d.nome,
-      email: d.email,
-      tel: d.tel,
-      dados: d,
-      notas: []
-    };
+    try {      
+      const curriculoPath = await uploadCurriculo(d.curriculo);
+      const resposta = await enviarCandidato({
+        nome: d.nome,
+        email: d.email,
+        telefone: d.tel,
+        mensagem: JSON.stringify({
+          cidade: d.cidade,
+          area: d.area,
+          vagaId: d.vagaId,
+          experiencia: d.exp,
+          porque: d.porque,
+          turnos: d.turnos,
+          nrs: d.nrs,
+          habilidades: d.hab,
+          transporte: d.transp,
+          disponibilidadeCampo: d.campo,
+          escolaridade: d.esc,
+          curso: d.curso,
+          ferramentas: d.ferr,
+          disponibilidadePresencial: d.pres,
+          linkedin: d.linkedin
+        }),
+        curriculo_path: curriculoPath
+      });
+      const candidato = await resposta.json();
 
-    const v = VAGAS.find(x => x.id === d.vagaId);
-    formCand.hidden = true;
-    const doneBox = $("#c_done");
-    if (doneBox) {
-      doneBox.hidden = false;
-      doneBox.innerHTML = `<span class="eyebrow">Candidatura registrada</span><h2>Obrigado, ${esc(d.nome.split(" ")[0])}!</h2><p>Sua vaga: <b>${esc(v ? v.titulo : "")}</b>.</p><span class="proto">${item.protocolo}</span><p class="muted">Retorno em até 48h úteis.</p>`;
+      const v = VAGAS.find(x => x.id === d.vagaId);
+      formCand.hidden = true;
+      const doneBox = $("#c_done");
+      if (doneBox) {
+        doneBox.hidden = false;
+        doneBox.innerHTML = `<span class="eyebrow">Candidatura registrada</span><h2>Obrigado, ${esc(d.nome.split(" ")[0])}!</h2><p>Sua vaga: <b>${esc(v ? v.titulo : "")}</b>.</p><span class="proto">Protocolo: ${esc(candidato.id ?? "")}</span><p class="muted">Retorno em até 48h úteis.</p>`;
+      }
+    } catch (error) {
+      console.error(error);
+      if (err) {
+        err.textContent = error.message || "Erro ao enviar candidatura.";
+        err.hidden = false;
+      }
     }
   });
 }
@@ -254,34 +269,37 @@ if (formCand) {
 // Formulário de Orçamento
 const formOrc = $("#formOrc");
 if (formOrc) {
-  formOrc.addEventListener("submit", e => {
+  formOrc.addEventListener("submit", async e => {
     e.preventDefault();
     const err = $("#o_err");
     if (err) err.hidden = true;
 
-    const d = {
+    const solicitante = {
       nome: $("#o_nome")?.value.trim() || "",
       cargo: $("#o_cargo")?.value.trim() || "",
       empresa: $("#o_empresa")?.value.trim() || "",
       email: $("#o_email")?.value.trim() || "",
-      tel: $("#o_tel")?.value.trim() || "",
-      horario: $("#o_horario")?.value || "",
+      telefone: $("#o_tel")?.value.trim() || "",
+      horarioPreferido: $("#o_horario")?.value || ""
+    };
+
+    const orcamento = {
       cidade: $("#o_cidade")?.value.trim() || "",
-      tipo: $("#o_tipo")?.value || "",
-      fase: $("#o_fase")?.value || "",
-      pav: $("#o_pav")?.value || "",
-      linhas: checked("o_linhas"),
+      tipoObra: $("#o_tipo")?.value || "",
+      faseAtual: $("#o_fase")?.value || "",
+      pavimentos: $("#o_pav")?.value ? Number($("#o_pav").value) : null,
+      solucoesRequeridas: checked("o_linhas").join(", "),
       prazo: $("#o_prazo")?.value || "",
-      msg: $("#o_msg")?.value.trim() || ""
+      observacoes: $("#o_msg")?.value.trim() || ""
     };
 
     const falta = [];
-    if (!d.nome) falta.push("Nome");
-    if (!d.empresa) falta.push("Empresa");
-    if (!/^\S+@\S+\.\S+$/.test(d.email)) falta.push("E-mail válido");
-    if (d.tel.replace(/\D/g, "").length < 10) falta.push("Telefone completo");
-    if (!d.cidade) falta.push("Cidade da obra");
-    if (!d.linhas.length) falta.push("Ao menos uma solução");
+    if (!solicitante.nome) falta.push("Nome");
+    if (!solicitante.empresa) falta.push("Empresa");
+    if (!/^\S+@\S+\.\S+$/.test(solicitante.email)) falta.push("E-mail válido");
+    if (solicitante.telefone.replace(/\D/g, "").length < 10) falta.push("Telefone completo");
+    if (!orcamento.cidade) falta.push("Cidade da obra");
+    if (!orcamento.solucoesRequeridas) falta.push("Ao menos uma solução");
     if ($("#o_lgpd") && !$("#o_lgpd").checked) falta.push("Aceite da LGPD");
 
     if (falta.length) {
@@ -292,34 +310,25 @@ if (formOrc) {
       return;
     }
 
-    const item = {
-      id: crypto.randomUUID?.() || String(Math.random()),
-      tipo: "orcamento",
-      criadoEm: new Date().toISOString(),
-      canal: "Site",
-      status: "Novo",
-      nome: d.nome,
-      email: d.email,
-      tel: d.tel,
-      dados: d,
-      notas: []
-    };
-
-    formOrc.hidden = true;
-    const doneBox = $("#o_done");
-    if (doneBox) {
-      doneBox.hidden = false;
-      doneBox.innerHTML = `<span class="eyebrow">Solicitação registrada</span><h2>Obrigado, ${esc(d.nome.split(" ")[0])}!</h2><p>Orçamento para: <b>${esc(d.empresa)}</b>.</p><span class="proto">${item.protocolo}</span><p class="muted">Contato em até 2h úteis.</p>`;
+    try {
+      const resposta = await enviarOrcamento({ solicitante, ...orcamento });
+      formOrc.hidden = true;
+      const doneBox = $("#o_done");
+      if (doneBox) {
+        doneBox.hidden = false;
+        doneBox.innerHTML = `<span class="eyebrow">Solicitação registrada</span><h2>Obrigado, ${esc(solicitante.nome.split(" ")[0])}!</h2><p>Orçamento para: <b>${esc(solicitante.empresa)}</b>.</p><span class="proto">Protocolo: ${esc(resposta.id ?? "")}</span><p class="muted">Contato em até 2h úteis.</p>`;
+      }
+    } catch (error) {
+      console.error(error);
+      if (err) {
+        err.textContent = error.message || "Erro ao solicitar orçamento.";
+        err.hidden = false;
+      }
     }
   });
 }
 
-/**
- * ============================================================================
- * 5. INICIALIZAÇÃO DA PÁGINA
- * 💡 [DICA]: Executa as funções principais logo que o site carrega.
- * ============================================================================
- */
+
 syncArea();
 renderVagas();
 route();

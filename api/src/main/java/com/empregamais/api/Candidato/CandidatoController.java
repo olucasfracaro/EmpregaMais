@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/gerenciar/candidatos")
 public class CandidatoController {
 
     private final CandidatoService candidatoService;
@@ -24,7 +26,7 @@ public class CandidatoController {
         this.candidatoService = candidatoService;
     }
 
-    @GetMapping("/candidatos")
+    @GetMapping
     public ResponseEntity<List<CandidatoResponseDTO>> buscarTodos() {
         List<CandidatoResponseDTO> candidatos = candidatoService.buscarCandidatos()
             .stream()
@@ -34,14 +36,14 @@ public class CandidatoController {
         return ResponseEntity.ok(candidatos);
     }
 
-    @GetMapping("/candidato/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<CandidatoResponseDTO> getCandidato(@PathVariable Long id) {
         Optional<Candidato> candidato = candidatoService.buscarCandidatoPorId(id);
         return candidato.map(value -> ResponseEntity.ok(toDTO(value)))
                         .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/candidato")
+    @PostMapping
     public ResponseEntity<CandidatoResponseDTO> criarCandidato(@RequestBody CandidatoRequestDTO request) {
         Candidato novoCandidato = new Candidato();
         novoCandidato.setNome(request.nome());
@@ -55,7 +57,7 @@ public class CandidatoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(salvo));
     }
 
-    @PutMapping("/candidato/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<CandidatoResponseDTO> atualizarCandidatoCompleto(@PathVariable Long id,
                                                                 @RequestBody CandidatoRequestDTO request) {
         Optional<Candidato> candidatoExistente = candidatoService.buscarCandidatoPorId(id);
@@ -78,7 +80,7 @@ public class CandidatoController {
         return ResponseEntity.ok(toDTO(salvo));
     }
 
-    @PatchMapping("/candidato/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<CandidatoResponseDTO> atualizarCandidato(@PathVariable Long id,
                                                            @RequestBody CandidatoRequestDTO request) {
         Optional<Candidato> candidatoExistente = candidatoService.buscarCandidatoPorId(id);
@@ -101,7 +103,7 @@ public class CandidatoController {
         return ResponseEntity.ok(toDTO(salvo));
     }
 
-    @DeleteMapping("/candidato/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarCandidato(@PathVariable Long id) {
         boolean deletado = candidatoService.deletarCandidato(id);
         if (deletado) {

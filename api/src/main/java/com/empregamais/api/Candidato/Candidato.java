@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "candidatos")
+@Table(name = "candidato")
 public class Candidato {
 
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)

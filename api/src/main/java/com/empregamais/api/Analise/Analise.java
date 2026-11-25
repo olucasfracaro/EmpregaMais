@@ -12,7 +12,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(name = "analises_curriculo")
+@Table(name = "analise_curriculo")
 public class Analise {
 
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
