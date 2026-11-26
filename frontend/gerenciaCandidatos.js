@@ -72,7 +72,7 @@ const curriculoBaseUrl = 'https://kampbrxrosxtspcmgewr.supabase.co/storage/v1/ob
 const candidatosCacheKey = 'candidatosCache-v2';
 const candidatosCacheTtl = 5 * 60 * 1000;
 
-let campoOrdenacao = 'id';
+let campoOrdenacao = 'nome';
 let direcaoOrdenacao = 'asc';
 let visualizacaoAtual = 0;
 let activeCandidateId = null;
@@ -80,6 +80,7 @@ let activeCandidateId = null;
 
 const tableBody = document.getElementById('tableBody');
 const searchInput = document.getElementById('searchInput');
+const candidateFilter = document.getElementById('candidateFilter');
 const emptyState = document.getElementById('emptyState');
 const confirmChangesButton = document.getElementById('confirmChanges') || document.getElementById('saveChangesBtn');
 const refreshCandidatesButton = document.getElementById('refreshCandidates') || document.getElementById('refreshBtn');
@@ -91,22 +92,8 @@ const curriculumModalTitle = document.getElementById('curriculumModalTitle');
 const curriculumPreview = document.getElementById('curriculumPreview');
 const closeCurriculumModalButton = document.getElementById('closeCurriculumModal');
 
-const detailModal = document.getElementById('detailModal');
-const closeModalBtn = document.getElementById('closeModalBtn');
-const modalAvatar = document.getElementById('modalAvatar');
-const modalName = document.getElementById('modalName');
-const modalRole = document.getElementById('modalRole');
-const modalPhone = document.getElementById('modalPhone');
-const modalPhoneBtn = document.getElementById('modalPhoneBtn');
-const modalEmail = document.getElementById('modalEmail');
-const modalEmailBtn = document.getElementById('modalEmailBtn');
-const modalPdfName = document.getElementById('modalPdfName');
-const modalPdfMeta = document.getElementById('modalPdfMeta');
-const modalMessageText = document.getElementById('modalMessageText');
-const modalStatusSelect = document.getElementById('modalStatusSelect');
-const replyTextarea = document.getElementById('replyTextarea');
-const sendReplyBtn = document.getElementById('sendReplyBtn');
-const modalDeleteBtn = document.getElementById('modalDeleteBtn');
+const candidateDetail = document.getElementById('candidateDetail');
+const candidateDetailContent = document.getElementById('candidateDetailContent');
 const toastContainer = document.getElementById('toastContainer');
 
 const statTotalVal = document.getElementById('statTotalVal');
@@ -124,6 +111,22 @@ const gerenciarView = document.getElementById('gerenciarView');
 const acompanharView = document.getElementById('acompanharView');
 const comercialView = document.getElementById('comercialView');
 const analysisGrid = document.getElementById('analysisGrid');
+if (candidateDetail) {
+    candidateDetail.addEventListener('click', event => {
+        if (event.target.closest('[data-close-candidate]')) {
+            closeModal();
+            return;
+        }
+        const pdfButton = event.target.closest('[data-pdf-action]');
+        if (pdfButton) {
+            window.simulatePdfAction(pdfButton.dataset.pdfAction);
+            return;
+        }
+        if (event.target.closest('[data-candidate-delete]') && activeCandidateId) {
+            window.apagarCandidato(activeCandidateId);
+        }
+    });
+}
 const adminDashboardMemoryKey = 'empregamais-admin-dashboard-v1';
 let adminDashboardMemory = { module: 'gerenciar', scrollByModule: {} };
 let activeModule = 'gerenciar';
@@ -195,6 +198,12 @@ function formatPhone(phoneDigits) {
     const matchShort = cleaned.match(/^(\d{2})(\d{4})(\d{4})$/);
     if (matchShort) return `(${matchShort[1]}) ${matchShort[2]}-${matchShort[3]}`;
     return phoneDigits;
+}
+
+function escaparHtml(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, caractere => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[caractere]));
 }
 
 function sanitizeEmail(email) {
@@ -302,18 +311,24 @@ function salvarCandidatosNoCache(dados) {
     }
 }
 
+function contarPendencias() {
+    let total = exclusoesPendentes.size;
+    for (const id of alteracoesPendentes.keys()) {
+        if (!exclusoesPendentes.has(Number(id))) total++;
+    }
+    return total;
+}
+
 function temAlteracoesPendentes() {
-    return alteracoesPendentes.size > 0 || exclusoesPendentes.size > 0;
+    return contarPendencias() > 0;
 }
 
 function atualizarBotaoConfirmacao() {
     if (!confirmChangesButton) return;
 
-    const totalPendencias = alteracoesPendentes.size + exclusoesPendentes.size;
+    const totalPendencias = contarPendencias();
     confirmChangesButton.disabled = totalPendencias === 0;
-    confirmChangesButton.innerHTML = totalPendencias > 0
-        ? `<i class="fa-solid fa-check"></i> Confirmar alterações (${totalPendencias})`
-        : '<i class="fa-solid fa-check"></i> Confirmar alterações';
+    confirmChangesButton.innerHTML = `<i class="fa-solid fa-floppy-disk"></i><span>Salvar alterações</span>${totalPendencias ? `<span class="quote-pending-count">${totalPendencias}</span>` : ''}`;
 }
 
 function confirmarSaidaSemSalvar() {
@@ -352,11 +367,15 @@ async function confirmarAlteracoes() {
 
     if (confirmChangesButton) {
         confirmChangesButton.disabled = true;
-        confirmChangesButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+        confirmChangesButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Salvando…</span>';
     }
 
     try {
-        for (const [id, alteracao] of alteracoesPendentes) {
+        for (const [id, alteracao] of [...alteracoesPendentes]) {
+            if (exclusoesPendentes.has(Number(id))) {
+                alteracoesPendentes.delete(id);
+                continue;
+            }
             await atualizarStatusComFallback(id, alteracao.status);
             alteracoesPendentes.delete(id);
         }
@@ -378,6 +397,7 @@ async function confirmarAlteracoes() {
                 throw new Error(`Erro ao excluir candidato ${id}: ${response.status}`);
             }
             exclusoesPendentes.delete(id);
+            candidatos = candidatos.filter(c => String(c.id) !== String(id));
         }
 
         salvarCandidatosNoCache(candidatos);
@@ -386,6 +406,8 @@ async function confirmarAlteracoes() {
         console.error('Não foi possível salvar as alterações:', error);
         showToast('Não foi possível salvar todas as alterações. Tente novamente.', 'fa-triangle-exclamation');
     } finally {
+        renderTable();
+        updateStats();
         atualizarBotaoConfirmacao();
     }
 }
@@ -409,30 +431,32 @@ async function carregarDadosIniciais() {
     updateStats();
 }
 
+const CAMPOS_ORDENACAO = { name: 'nome', status: 'status' };
+const ROTULOS_ORDENACAO = {
+    nome: 'nome do candidato',
+    status: 'status',
+    id: 'número do candidato'
+};
+
+function campoDoCabecalho(th) {
+    return CAMPOS_ORDENACAO[th.dataset.sort] || 'id';
+}
+
 function ordenarCandidatos(data) {
     const lista = [...data];
 
     lista.sort((a, b) => {
-        let valA = a[campoOrdenacao];
-        let valB = b[campoOrdenacao];
+        const valA = a[campoOrdenacao];
+        const valB = b[campoOrdenacao];
+        let resultado;
 
-        if (typeof valA === 'string') {
-            valA = valA.toLowerCase();
+        if (typeof valA === 'string' || typeof valB === 'string') {
+            resultado = String(valA ?? '').localeCompare(String(valB ?? ''), 'pt-BR', { sensitivity: 'base' });
+        } else {
+            resultado = valA < valB ? -1 : valA > valB ? 1 : 0;
         }
 
-        if (typeof valB === 'string') {
-            valB = valB.toLowerCase();
-        }
-
-        if (valA < valB) {
-            return direcaoOrdenacao === 'asc' ? -1 : 1;
-        }
-
-        if (valA > valB) {
-            return direcaoOrdenacao === 'asc' ? 1 : -1;
-        }
-
-        return 0;
+        return direcaoOrdenacao === 'asc' ? resultado : -resultado;
     });
 
     return lista;
@@ -450,21 +474,26 @@ function alternarOrdenacao(campo) {
 }
 
 function atualizarIndicadoresOrdenacao() {
-    const classeSetaAtual = direcaoOrdenacao === 'asc' ? 'fa-arrow-down-short-wide' : 'fa-arrow-up-wide-short';
-
-    if (sortByIdIcon) {
-        sortByIdIcon.className = `sort-indicator fa-solid ${campoOrdenacao === 'id' ? classeSetaAtual : 'fa-sort'}`;
-    }
-    if (sortByNameIcon) {
-        sortByNameIcon.className = `sort-indicator fa-solid ${campoOrdenacao === 'name' ? classeSetaAtual : 'fa-sort'}`;
-    }
+    document.querySelectorAll('#gerenciarView .candidate-table th[data-sort]').forEach(th => {
+        const campo = campoDoCabecalho(th);
+        const ativo = campo === campoOrdenacao;
+        th.setAttribute('aria-sort', ativo
+            ? (direcaoOrdenacao === 'asc' ? 'ascending' : 'descending')
+            : 'none');
+        const direcao = ativo ? direcaoOrdenacao : 'asc';
+        const ordem = `${direcao === 'asc' ? 'A → Z' : 'Z → A'} (${direcao === 'asc' ? 'crescente' : 'decrescente'})`;
+        th.title = ativo
+            ? `Ordenado por ${ROTULOS_ORDENACAO[campo]}: ${ordem}. Clique para inverter.`
+            : `Ordenar por ${ROTULOS_ORDENACAO[campo]}: ${ordem}.`;
+    });
 }
 
 function updateStats() {
-    const total = candidatos.length;
-    const concluido = candidatos.filter(c => c.status === 'CONCLUÍDO').length;
-    const pendente = candidatos.filter(c => c.status === 'PENDENTE').length;
-    const recusado = candidatos.filter(c => c.status === 'RECUSADO').length;
+    const ativos = candidatos.filter(c => !exclusoesPendentes.has(Number(c.id)));
+    const total = ativos.length;
+    const concluido = ativos.filter(c => c.status === 'CONCLUÍDO').length;
+    const pendente = ativos.filter(c => c.status === 'PENDENTE').length;
+    const recusado = ativos.filter(c => c.status === 'RECUSADO').length;
 
     if (statTotalVal) statTotalVal.textContent = total;
     if (statConcluidoVal) statConcluidoVal.textContent = concluido;
@@ -475,14 +504,18 @@ function updateStats() {
 function renderTable() {
     if (!tableBody) return;
     tableBody.innerHTML = '';
+    atualizarIndicadoresOrdenacao();
 
     const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const statusFilter = candidateFilter ? candidateFilter.value : 'todos';
 
     let filtrados = candidatos.filter(item => {
         const idMatch = item.id.toString().includes(searchTerm);
         const nameMatch = item.nome.toLowerCase().includes(searchTerm);
         const roleMatch = (item.cargo || '').toLowerCase().includes(searchTerm);
-        return idMatch || nameMatch || roleMatch;
+        const matchesSearch = idMatch || nameMatch || roleMatch;
+        const matchesStatus = statusFilter === 'todos' || item.status === statusFilter;
+        return matchesSearch && matchesStatus;
     });
 
     filtrados = ordenarCandidatos(filtrados);
@@ -496,131 +529,113 @@ function renderTable() {
 
     filtrados.forEach(item => {
         const tr = document.createElement('tr');
+        if (exclusoesPendentes.has(Number(item.id))) tr.classList.add('is-pending-delete');
         tr.innerHTML = `
-            <td style="font-weight: 800; color: var(--red-primary, #dc2626);">#${item.id}</td>
             <td>
-                <div class="user-cell">
-                    <div class="avatar-circle">${getInitials(item.nome)}</div>
-                    <div class="user-info">
-                        <div class="user-name" style="font-weight: 600;">${item.nome}</div>
-                        <div class="user-role" style="font-size: 0.75rem; color: var(--text-secondary);">${item.cargo}</div>
-                    </div>
-                </div>
+                <button class="quote-person" type="button" onclick="window.openCandidateModal('${item.id}')">
+                    <span class="quote-avatar">${escaparHtml(getInitials(item.nome))}</span>
+                    <span class="quote-person-copy"><strong>${escaparHtml(item.nome)}</strong><span>#${item.id}</span></span>
+                </button>
             </td>
             <td style="color: var(--text-secondary); font-weight: 500;">${formatPhone(item.telefone)}</td>
             <td style="color: var(--text-secondary);">${sanitizeEmail(item.email)}</td>
+            <td>${window.renderStatusDropdown(item.id, item.status, 'table', 'candidate')}</td>
             <td>
-                <select
-                    class="status-select ${classeStatus(item.status)}"
-                    onchange="window.handleTableStatusChange(this, ${item.id})"
-                >
-                    <option value="CONCLUÍDO" ${item.status === 'CONCLUÍDO' ? 'selected' : ''}>CONCLUÍDO</option>
-                    <option value="PENDENTE" ${item.status === 'PENDENTE' ? 'selected' : ''}>PENDENTE</option>
-                    <option value="RECUSADO" ${item.status === 'RECUSADO' ? 'selected' : ''}>RECUSADO</option>
-                </select>
-            </td>
-            <td class="actions-cell">
-                <button class="btn-action-view" onclick="window.openCandidateModal('${item.id}')">
-                    <i class="fa-solid fa-address-card"></i> Ver Ficha
-                </button>
-                <button class="btn-action-delete" title="Excluir Candidato" onclick="window.apagarCandidato('${item.id}')">
-                    <i class="fa-solid fa-trash"></i>
+                <button class="quote-open-button" type="button" title="Ver ficha" aria-label="Ver ficha de ${item.nome}" onclick="window.openCandidateModal('${item.id}')">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
                 </button>
             </td>
         `;
         tableBody.appendChild(tr);
     });
+    atualizarIndicadoresOrdenacao();
 }
 
-
 window.handleTableStatusChange = function(selectElem, id) {
+    if (exclusoesPendentes.has(Number(id))) return;
     const newStatus = selectElem.value;
     const item = candidatos.find(c => c.id === id);
 
     if (item) {
         item.status = newStatus;
         alteracoesPendentes.set(id, { status: newStatus });
-        selectElem.className = `status-select ${classeStatus(newStatus)}`;
-       
-        if (activeCandidateId === id && modalStatusSelect) {
-            modalStatusSelect.value = newStatus;
-            modalStatusSelect.className = `status-select ${classeStatus(newStatus)}`;
-        }
+
+        if (String(activeCandidateId) === String(id)) window.openCandidateModal(item.id);
 
         updateStats();
         atualizarBotaoConfirmacao();
-        showToast(`Status do ID #${id} alterado para [${newStatus}]`);
+        renderTable();
+        showToast(`Status do candidato #${id} alterado para [${newStatus}]`);
     }
 };
 
 window.openCandidateModal = function(id) {
     const candidate = candidatos.find(c => String(c.id) === String(id));
-    if (!candidate) return;
+    if (!candidate || !candidateDetail || !candidateDetailContent) return;
 
     activeCandidateId = candidate.id;
 
-    if (modalAvatar) modalAvatar.textContent = getInitials(candidate.nome);
-    if (modalName) modalName.textContent = candidate.nome;
-    if (modalRole) modalRole.textContent = `${candidate.cargo} • ID #${candidate.id}`;
+    const marcadoParaExclusao = exclusoesPendentes.has(Number(candidate.id));
+    const info = (titulo, valor, icone, idElemento = '') => `<div class="quote-detail-item"><span class="quote-detail-icon"><i class="fa-solid ${icone}"></i></span><div><small>${titulo}</small><strong${idElemento ? ` id="${idElemento}"` : ''}>${escaparHtml(valor || 'Não informado')}</strong></div></div>`;
 
-    const formattedPhone = formatPhone(candidate.telefone);
-    if (modalPhone) modalPhone.textContent = formattedPhone;
-    if (modalPhoneBtn) modalPhoneBtn.href = `https://wa.me/55${candidate.telefone.replace(/\D/g, '')}`;
+    const telefone = candidate.telefone ? formatPhone(candidate.telefone) : '';
+    const telefoneDigitos = String(candidate.telefone || '').replace(/\D/g, '');
+    const email = candidate.email ? sanitizeEmail(candidate.email) : '';
+    const arquivo = candidate.curriculoPath ? candidate.curriculoPath.split('/').pop() : '';
+    const iconeArquivo = curriculoEhImagem(candidate.curriculoPath) ? 'fa-file-image' : 'fa-file-pdf';
 
-    const formattedEmail = sanitizeEmail(candidate.email);
-    if (modalEmail) modalEmail.textContent = formattedEmail;
-    if (modalEmailBtn) modalEmailBtn.href = `mailto:${formattedEmail}`;
+    candidateDetailContent.innerHTML = `
+        <section class="quote-detail-status${marcadoParaExclusao ? ' is-locked' : ''}"><span>Status atual</span>${window.renderStatusDropdown(candidate.id, candidate.status, 'detail', 'candidate')}</section>
+        <section class="quote-detail-section"><h3><i class="fa-regular fa-address-card"></i> Candidato</h3><div class="quote-detail-person"><span class="quote-avatar">${escaparHtml(getInitials(candidate.nome))}</span><div><strong>${escaparHtml(candidate.nome || 'Candidato sem nome')}</strong><span>${escaparHtml(candidate.cargo || '')}</span></div></div>${info('E-mail', email, 'fa-envelope')}${email ? `<a class="quote-contact-link" href="mailto:${escaparHtml(email)}"><i class="fa-regular fa-paper-plane"></i> Enviar e-mail</a>` : ''}${info('Telefone', telefone, 'fa-phone')}${telefoneDigitos ? `<a class="quote-contact-link" href="https://wa.me/55${telefoneDigitos}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Conversar no WhatsApp</a>` : ''}</section>
+        <section class="quote-detail-section"><h3><i class="fa-solid fa-file-lines"></i> Currículo</h3>${info('Arquivo', arquivo || 'Currículo não disponível', iconeArquivo)}${arquivo ? `<div><button class="quote-contact-link" type="button" data-pdf-action="Visualizar"><i class="fa-regular fa-eye"></i> Visualizar currículo</button></div><div><button class="quote-contact-link" type="button" data-pdf-action="Download"><i class="fa-solid fa-download"></i> Baixar currículo</button></div>` : ''}${info('Tamanho', candidate.pdfSize || (arquivo ? 'Calculando…' : ''), 'fa-weight-hanging', 'candidatePdfSize')}${info('Enviado em', candidate.dataEnvio, 'fa-calendar')}</section>
+        <section class="quote-detail-section"><h3><i class="fa-solid fa-comments"></i> Mensagem</h3><div class="quote-detail-notes"><small>Mensagem do candidato</small><p>${escaparHtml(candidate.mensagem || 'Nenhuma mensagem enviada.')}</p></div></section>
+        <section class="quote-delete-section"><div><strong>Excluir candidato</strong><p>Marca o candidato e o currículo anexo para exclusão. Nada é apagado até você salvar as alterações.</p></div><button type="button" data-candidate-delete>${marcadoParaExclusao ? '<i class="fa-solid fa-rotate-left"></i> Desfazer exclusão' : '<i class="fa-regular fa-trash-can"></i> Apagar candidato'}</button></section>
+        <footer class="quote-detail-footer">Candidatura #${escaparHtml(candidate.id)} · Enviada em ${escaparHtml(candidate.dataEnvio || 'data indisponível')}</footer>`;
 
-    if (modalPdfName) {
-        modalPdfName.textContent = candidate.curriculoPath
-            ? candidate.curriculoPath.split('/').pop()
-            : 'Currículo não disponível';
-    }
-    if (modalPdfMeta) {
-        modalPdfMeta.textContent = `Tamanho: ${candidate.pdfSize || 'calculando...'} • Enviado em ${candidate.dataEnvio}`;
-    }
-    atualizarTamanhoCurriculo(candidate);
+    candidateDetail.hidden = false;
+    candidateDetail.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('quote-detail-open');
+    candidateDetail.querySelector('.quote-close')?.focus();
 
-    if (modalMessageText) modalMessageText.textContent = `"${candidate.mensagem}"`;
-    if (modalStatusSelect) {
-        modalStatusSelect.value = candidate.status;
-        modalStatusSelect.className = `status-select status-${candidate.status.toLowerCase()}`;
-    }
-    if (replyTextarea) replyTextarea.value = '';
-
-    if (detailModal) {
-        detailModal.classList.add('active');
-        detailModal.setAttribute('aria-hidden', 'false');
-    }
+    if (arquivo && !candidate.pdfSize) atualizarTamanhoCurriculo(candidate);
 };
 
 function closeModal() {
-    if (detailModal) {
-        detailModal.classList.remove('active');
-        detailModal.setAttribute('aria-hidden', 'true');
-    }
     activeCandidateId = null;
+    if (!candidateDetail || candidateDetail.hidden) return;
+    candidateDetail.hidden = true;
+    candidateDetail.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('quote-detail-open');
 }
 
 window.apagarCandidato = async function(id) {
-    if (!confirm(`Tem certeza que deseja apagar o candidato #${id}?`)) return;
-
     const candidate = candidatos.find(c => String(c.id) === String(id));
     if (!candidate) return;
 
-    candidatos = candidatos.filter(c => String(c.id) !== String(id));
-    alteracoesPendentes.delete(Number(id));
-    exclusoesPendentes.set(Number(id), candidate);
+    const chave = Number(id);
+
+    if (exclusoesPendentes.has(chave)) {
+        exclusoesPendentes.delete(chave);
+        renderTable();
+        updateStats();
+        atualizarBotaoConfirmacao();
+        showToast(`Exclusão do candidato #${id} desfeita.`, 'fa-rotate-left');
+        if (String(activeCandidateId) === String(id)) window.openCandidateModal(id);
+        return;
+    }
+
+    if (!confirm(`Marcar o candidato #${id} para exclusão? Ele só será apagado quando você salvar as alterações.`)) return;
+
+    exclusoesPendentes.set(chave, candidate);
     renderTable();
     updateStats();
     atualizarBotaoConfirmacao();
-    showToast(`Candidato #${id} marcado para exclusão. Confirme para salvar.`, 'fa-trash');
+    showToast(`Candidato #${id} marcado para exclusão. Salve as alterações para confirmar.`, 'fa-trash');
 
     if (String(activeCandidateId) === String(id)) {
         closeModal();
     }
 };
-
 
 
 function obterCaminhoStorage(caminhoOriginal) {
@@ -697,8 +712,9 @@ async function atualizarTamanhoCurriculo(candidate) {
         if (!tamanho) return;
 
         candidate.pdfSize = tamanho;
-        if (activeCandidateId === candidate.id && modalPdfMeta) {
-            modalPdfMeta.textContent = `Tamanho: ${tamanho} • Enviado em ${candidate.dataEnvio}`;
+        if (String(activeCandidateId) === String(candidate.id)) {
+            const campoTamanho = document.getElementById('candidatePdfSize');
+            if (campoTamanho) campoTamanho.textContent = tamanho;
         }
     } catch (error) {
         console.warn('Não foi possível consultar o tamanho do currículo:', error);
@@ -804,6 +820,7 @@ function fecharCurriculo() {
 
 
 function showToast(message, icon = 'fa-circle-check') {
+    if (message !== 'Alterações salvas com sucesso!') return;
     if (!toastContainer) return;
     const toast = document.createElement('div');
     toast.className = 'toast';
@@ -822,19 +839,26 @@ function showToast(message, icon = 'fa-circle-check') {
 function setupDarkMode() {
     if (!darkModeToggle) return;
     const isDark = localStorage.getItem('theme_dark') === 'true';
-    if (isDark) {
-        document.body.classList.add('dark-mode');
-        darkModeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
-    }
+    document.body.classList.toggle('dark-mode', isDark);
+
+    const atualizarControleTema = dark => {
+        darkModeToggle.innerHTML = dark
+            ? '<i class="fa-solid fa-sun"></i>'
+            : '<i class="fa-solid fa-moon"></i>';
+        darkModeToggle.setAttribute('aria-pressed', String(dark));
+        darkModeToggle.title = dark ? 'Ativar tema claro' : 'Ativar tema escuro';
+        darkModeToggle.setAttribute('aria-label', dark ? 'Ativar tema claro' : 'Ativar tema escuro');
+    };
+    atualizarControleTema(isDark);
 
     darkModeToggle.addEventListener('click', () => {
         const dark = document.body.classList.toggle('dark-mode');
         localStorage.setItem('theme_dark', dark);
-        darkModeToggle.innerHTML = dark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+        atualizarControleTema(dark);
     });
 }
 
-async function verificarStatusApi() {
+async function verificarStatusApi(endpoint = `${API_BASE_URL}/gerenciar/candidatos`) {
     if (!apiStatusIndicator || !apiStatusText) return;
 
     apiStatusIndicator.className = 'api-status-indicator is-checking';
@@ -844,7 +868,7 @@ async function verificarStatusApi() {
     const timeout = setTimeout(() => controller.abort(), 8000);
 
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/gerenciar/candidatos`, {
+        const response = await authenticatedFetch(endpoint, {
             method: 'GET',
             signal: controller.signal,
             headers: { 'Content-Type': 'application/json' }
@@ -864,6 +888,10 @@ async function verificarStatusApi() {
         clearTimeout(timeout);
     }
 }
+
+window.addEventListener('empregamais:check-api-status', event => {
+    verificarStatusApi(event.detail?.endpoint || `${API_BASE_URL}/gerenciar/candidatos`);
+});
 
 async function atualizarStatusETabela() {
     if (temAlteracoesPendentes()) {
@@ -1002,17 +1030,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     restoreAdminModuleScroll();
 
     if (searchInput) searchInput.addEventListener('input', renderTable);
-    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+    if (candidateFilter) candidateFilter.addEventListener('change', renderTable);
+    const candidateTableHead = document.querySelector('#gerenciarView .candidate-table thead');
+    if (candidateTableHead) {
+        const ordenarPeloCabecalho = th => {
+            const campo = campoDoCabecalho(th);
+            if (campoOrdenacao === campo) direcaoOrdenacao = direcaoOrdenacao === 'asc' ? 'desc' : 'asc';
+            else {
+                campoOrdenacao = campo;
+                direcaoOrdenacao = 'asc';
+            }
+            if (sortUnifiedSelect) sortUnifiedSelect.value = `${campo === 'nome' ? 'name' : 'id'}_${direcaoOrdenacao}`;
+            renderTable();
+        };
+        candidateTableHead.addEventListener('click', event => {
+            const th = event.target.closest('th[data-sort]');
+            if (th) ordenarPeloCabecalho(th);
+        });
+        candidateTableHead.addEventListener('keydown', event => {
+            if (!['Enter', ' '].includes(event.key)) return;
+            const th = event.target.closest('th[data-sort]');
+            if (!th) return;
+            event.preventDefault();
+            ordenarPeloCabecalho(th);
+        });
+    }
     if (closeCurriculumModalButton) closeCurriculumModalButton.addEventListener('click', fecharCurriculo);
 
     if (confirmChangesButton) confirmChangesButton.addEventListener('click', confirmarAlteracoes);
 
     if (refreshCandidatesButton) {
-        refreshCandidatesButton.addEventListener('click', () => {
+        refreshCandidatesButton.addEventListener('click', async () => {
             if (!confirmarSaidaSemSalvar()) return;
             descartarAlteracoesPendentes();
-            atualizarStatusETabela();
-            showToast('Dados atualizados com sucesso!', 'fa-rotate-right');
+            refreshCandidatesButton.disabled = true;
+            try {
+                await atualizarStatusETabela();
+                showToast('Candidatos atualizados.', 'fa-rotate-right');
+            } catch (error) {
+                console.error('Não foi possível atualizar os candidatos:', error);
+                showToast('Não foi possível atualizar os candidatos.', 'fa-triangle-exclamation');
+            } finally {
+                refreshCandidatesButton.disabled = false;
+            }
         });
     }
 
@@ -1027,44 +1087,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    if (detailModal) {
-        detailModal.addEventListener('click', (e) => {
-            if (e.target === detailModal) closeModal();
-        });
-    }
-
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeModal();
             fecharCurriculo();
         }
     });
-
-    if (modalStatusSelect) {
-        modalStatusSelect.addEventListener('change', (e) => {
-            if (activeCandidateId) {
-                window.handleTableStatusChange(modalStatusSelect, activeCandidateId);
-            }
-        });
-    }
-
-    if (sendReplyBtn) {
-        sendReplyBtn.addEventListener('click', () => {
-            const text = replyTextarea ? replyTextarea.value.trim() : '';
-            if (!text) {
-                showToast('Por favor, digite uma mensagem de resposta.', 'fa-triangle-exclamation');
-                return;
-            }
-            if (replyTextarea) replyTextarea.value = '';
-            showToast('Resposta enviada com sucesso!', 'fa-paper-plane');
-        });
-    }
-
-    if (modalDeleteBtn) {
-        modalDeleteBtn.addEventListener('click', () => {
-            if (activeCandidateId) window.apagarCandidato(activeCandidateId);
-        });
-    }
 
     window.addEventListener('beforeunload', (event) => {
         if (!temAlteracoesPendentes()) return;

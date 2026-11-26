@@ -48,17 +48,17 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #ffffff;
+            background-color: var(--bg-card);
             padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border-bottom: 1px solid #eaeaea;
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--border-subtle);
             box-sizing: border-box;
         }
         
         .nav-brand {
             font-size: 1.25rem;
             font-weight: 700;
-            color: #d32f2f;
+            color: var(--red-primary);
             display: flex;
             align-items: center;
             gap: 10px;
@@ -74,7 +74,7 @@
         
         .nav-links a {
             text-decoration: none;
-            color: #64748b;
+            color: var(--text-secondary);
             font-weight: 500;
             font-size: 0.95rem;
             transition: color 0.2s;
@@ -84,13 +84,13 @@
         }
         
         .nav-links a:hover, .nav-links a.active {
-            color: #d32f2f;
+            color: var(--red-primary);
         }
 
         .nav-tab {
             border: 0;
             background: transparent;
-            color: #64748b;
+            color: var(--text-secondary);
             font: inherit;
             font-weight: 500;
             cursor: pointer;
@@ -102,7 +102,7 @@
 
         .nav-tab:hover,
         .nav-tab.active {
-            color: #d32f2f;
+            color: var(--red-primary);
         }
 
         .nav-tab:disabled,
@@ -131,7 +131,7 @@
         }
 
         .module-card i {
-            color: #d32f2f;
+            color: var(--red-primary);
             font-size: 2.5rem;
         }
 
@@ -154,15 +154,21 @@
         }
 
         .analysis-card {
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-subtle);
             border-radius: 12px;
             padding: 18px;
-            background: #fff;
+            background: var(--bg-card);
+            color: var(--text-primary);
         }
 
         .analysis-card strong {
             display: block;
             margin-bottom: 8px;
+        }
+
+        .analysis-card span,
+        .analysis-card p {
+            color: var(--text-secondary);
         }
         
         .nav-profile {
@@ -170,11 +176,39 @@
             align-items: center;
             gap: 10px;
             padding: 6px 7px 6px 8px;
-            border: 1px solid #e8edf3;
+            border: 1px solid var(--border-subtle);
             border-radius: 13px;
-            background: #f8fafc;
-            color: #1e293b;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-account-controls {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .nav-theme-toggle {
+            display: grid;
+            flex: 0 0 36px;
+            width: 36px;
+            height: 36px;
+            place-items: center;
+            border: 1px solid var(--border-subtle);
+            border-radius: 11px;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
+            transition: color .2s, background .2s, border-color .2s, transform .2s;
+        }
+
+        .nav-theme-toggle:hover {
+            transform: translateY(-1px);
+            border-color: var(--red-primary);
+            background: var(--red-light);
+            color: var(--red-primary);
         }
 
         .nav-profile-copy {
@@ -185,7 +219,7 @@
         }
 
         .nav-profile-label {
-            color: #94a3b8;
+            color: var(--text-secondary);
             font-size: 0.59rem;
             font-weight: 700;
             letter-spacing: 0.08em;
@@ -208,8 +242,8 @@
             height: 32px;
             border: 0;
             border-radius: 9px;
-            background: #ffffff;
-            color: #64748b;
+            background: var(--bg-page);
+            color: var(--text-secondary);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -219,8 +253,8 @@
         }
 
         .nav-profile .nav-logout:hover {
-            background: #fee2e2;
-            color: #dc2626;
+            background: var(--red-light);
+            color: var(--red-primary);
             transform: translateY(-1px);
         }
 
@@ -239,7 +273,7 @@
             height: 35px;
             flex: 0 0 35px;
             border-radius: 11px;
-            background: linear-gradient(145deg, #ef4444, #b91c1c);
+            background: linear-gradient(145deg, var(--red-primary), var(--red-hover));
             color: white;
             display: flex;
             align-items: center;
@@ -252,7 +286,7 @@
         @media (max-width: 760px) {
             .main-navbar { gap: 12px; padding: 0.75rem 1rem; flex-wrap: wrap; }
             .nav-links { order: 3; width: 100%; justify-content: center; gap: clamp(12px, 5vw, 28px); }
-            .nav-profile { margin-left: auto; }
+            .nav-account-controls { margin-left: auto; }
         }
 
         @media (max-width: 420px) {
@@ -277,123 +311,49 @@
             <li><button type="button" class="nav-tab" data-module="comercial"><i class="fa-solid fa-handshake"></i> Comercial</button></li>
         </ul>
 
-        <div class="nav-profile" aria-label="Perfil conectado">
-            <div class="nav-avatar" id="avatar_usuario">RH</div>
-            <div class="nav-profile-copy"><span class="nav-profile-label">Conectado como</span><span id="nome_usuario">Recursos Humanos</span></div>
-            <button id="logoutBtn" class="nav-logout" title="Sair da conta" aria-label="Sair da conta">
-                <i class="fa-solid fa-right-from-bracket"></i>
+        <div class="nav-account-controls">
+            <button id="darkModeToggle" class="nav-theme-toggle" type="button" title="Alternar tema" aria-label="Alternar tema" aria-pressed="false">
+                <i class="fa-solid fa-moon"></i>
             </button>
+            <div class="nav-profile" aria-label="Perfil conectado">
+                <div class="nav-avatar" id="avatar_usuario">RH</div>
+                <div class="nav-profile-copy"><span class="nav-profile-label">Conectado como</span><span id="nome_usuario">Recursos Humanos</span></div>
+                <button id="logoutBtn" class="nav-logout" title="Sair da conta" aria-label="Sair da conta">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
         </div>
     </nav>
 
     <div id="gerenciarView" class="module-view">
-    <div class="dashboard-container">
-       
-        <header class="red-header-banner">
-            <div class="brand-section">
-                <h1><i class="fa-solid fa-users-gear"></i> Gestão de Candidatos</h1>
-                <p>Monitore requisições, avalie currículos e gerencie candidatos com facilidade.</p>
-            </div>
-
-            <div class="header-actions">
-                <div class="search-container">
-                    <input
-                        type="text"
-                        id="searchInput"
-                        class="search-input"
-                        placeholder="Buscar por nome, cargo ou ID..."
-                        autocomplete="off"
-                    >
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <main class="commercial-dashboard candidate-dashboard">
+            <header class="commercial-heading">
+                <div><span class="commercial-eyebrow">RECRUTAMENTO E SELEÇÃO</span><h1>Gestão de candidatos</h1><p>Acompanhe candidaturas, atualize status e mantenha os processos organizados.</p></div>
+                <div class="candidate-heading-actions">
+                    <button id="saveChangesBtn" class="commercial-save" title="Salvar e confirmar alterações" disabled><i class="fa-solid fa-floppy-disk"></i><span>Salvar alterações</span></button>
+                    <button id="refreshBtn" class="commercial-refresh" title="Recarregar candidatos"><i class="fa-solid fa-rotate-right"></i><span>Atualizar</span></button>
                 </div>
-                
-                <button id="darkModeToggle" class="btn-header-action" title="Alternar Modo Escuro">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
-
-            </div>
-        </header>
-
-        <div class="toolbar-card">
-            <div class="toolbar-group">
-                <button id="refreshBtn" class="btn-toolbar" title="Recarregar Dados">
-                    <i class="fa-solid fa-rotate-right"></i> Atualizar
-                </button>
-                <button id="saveChangesBtn" class="btn-toolbar btn-save" title="Salvar e Confirmar Alterações">
-                    <i class="fa-solid fa-check"></i> Confirmar alterações
-                </button>
-            </div>
-
-            <div class="toolbar-group">
-                <span class="toolbar-label"><i class="fa-solid fa-sort"></i> Ordenar:</span>
-                <select id="sortUnifiedSelect" class="btn-toolbar sort-select">
-                    <option value="id_asc">ID (Crescente)</option>
-                    <option value="id_desc">ID (Decrescente)</option>
-                    <option value="name_asc">Nome (A-Z)</option>
-                    <option value="name_desc">Nome (Z-A)</option>
-                </select>
-            </div>
-        </div>
-
-        <section class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-info">
-                    <span class="stat-label">Total de Registros</span>
-                    <div id="statTotalVal" class="stat-value">0</div>
+            </header>
+            <section class="quote-metrics candidate-metrics" aria-label="Resumo das candidaturas">
+                <article class="quote-metric"><span>Total de candidatos</span><strong id="statTotalVal">0</strong><i class="fa-solid fa-users"></i></article>
+                <article class="quote-metric"><span>Concluídos</span><strong id="statConcluidoVal">0</strong><i class="fa-solid fa-circle-check"></i></article>
+                <article class="quote-metric"><span>Pendentes</span><strong id="statPendenteVal">0</strong><i class="fa-solid fa-clock"></i></article>
+                <article class="quote-metric"><span>Recusados</span><strong id="statRecusadoVal">0</strong><i class="fa-solid fa-circle-xmark"></i></article>
+            </section>
+            <section class="quote-panel candidate-panel">
+                <div class="quote-toolbar">
+                    <div><h2>Candidaturas recebidas</h2><p>Consulte os contatos e faça a triagem dos perfis.</p></div>
+                    <div class="quote-controls candidate-controls">
+                        <label class="quote-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="searchInput" placeholder="Buscar nome, cargo ou ID" autocomplete="off" aria-label="Buscar candidatos"></label>
+                        <select id="candidateFilter" aria-label="Filtrar por status"><option value="todos">Todos os status</option><option value="CONCLUÍDO">CONCLUÍDO</option><option value="PENDENTE">PENDENTE</option><option value="RECUSADO">RECUSADO</option></select>
+                    </div>
                 </div>
-                <div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div>
-            </div>
-
-            <div class="stat-card stat-concluido">
-                <div class="stat-info">
-                    <span class="stat-label">Concluídos</span>
-                    <div id="statConcluidoVal" class="stat-value">0</div>
+                <div class="quote-table-wrap candidate-table-wrap">
+                    <table class="quote-table candidate-table"><thead><tr><th data-sort="name" tabindex="0" aria-sort="ascending">Candidato</th><th>Telefone</th><th>E-mail</th><th data-sort="status" tabindex="0" aria-sort="none">Status</th><th class="candidate-actions-heading"><span class="sr-only">Ações</span></th></tr></thead><tbody id="tableBody"></tbody></table>
                 </div>
-                <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
-            </div>
-
-            <div class="stat-card stat-pendente">
-                <div class="stat-info">
-                    <span class="stat-label">Pendentes</span>
-                    <div id="statPendenteVal" class="stat-value">0</div>
-                </div>
-                <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
-            </div>
-
-            <div class="stat-card stat-recusado">
-                <div class="stat-info">
-                    <span class="stat-label">Recusados</span>
-                    <div id="statRecusadoVal" class="stat-value">0</div>
-                </div>
-                <div class="stat-icon"><i class="fa-solid fa-circle-xmark"></i></div>
-            </div>
-        </section>
-
-        <main class="table-card">
-            <div class="table-wrapper">
-                <table class="custom-table">
-                    <thead>
-                        <tr>
-                            <th data-sort="id">ID</th>
-                            <th data-sort="name">NOME & CARGO</th>
-                            <th>TELEFONE</th>
-                            <th>EMAIL</th>
-                            <th>STATUS</th>
-                            <th style="text-align: right;">AÇÕES</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="emptyState" class="empty-state">
-                <i class="fa-solid fa-user-slash"></i>
-                <p>Nenhum registro foi encontrado para o termo pesquisado.</p>
-            </div>
+                <div id="emptyState" class="quote-empty candidate-empty"><span class="quote-empty-icon"><i class="fa-solid fa-user-slash"></i></span><strong>Nenhum candidato encontrado</strong><p>Nenhum registro corresponde ao termo pesquisado.</p></div>
+            </section>
         </main>
-    </div>
     </div>
 
     <div id="acompanharView" class="module-view" hidden>
@@ -423,7 +383,7 @@
                     <div class="quote-controls"><label class="quote-search"><i class="fa-solid fa-magnifying-glass"></i><input id="quoteSearch" type="search" placeholder="Buscar empresa, solicitante ou cidade" aria-label="Buscar orçamentos"></label>
                     <select id="quoteFilter" aria-label="Filtrar por status"><option value="todos">Todos os status</option><option>Novo</option><option>Em qualificação</option><option>Visita técnica</option><option>Proposta enviada</option><option>Fechado</option><option>Perdido</option></select></div>
                 </div>
-                <div class="quote-table-wrap"><table class="quote-table"><thead><tr><th data-sort="solicitante">Solicitante</th><th data-sort="cidade">Obra e soluções</th><th data-sort="data">Recebido</th><th data-sort="status">Status comercial</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="quoteTableBody"></tbody></table></div>
+                <div class="quote-table-wrap"><table class="quote-table"><thead><tr><th data-sort="solicitante">Solicitante</th><th data-sort="cidade">Obra e soluções</th><th data-sort="data">Recebido</th><th data-sort="status">Status</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="quoteTableBody"></tbody></table></div>
                 <div class="quote-empty" id="quoteEmpty" hidden><span class="quote-empty-icon"><i class="fa-regular fa-folder-open"></i></span><strong id="quoteEmptyTitle">Nenhum orçamento por aqui</strong><p id="quoteEmptyText">As novas solicitações aparecerão nesta lista.</p></div>
             </section>
         </main>
@@ -439,110 +399,12 @@
     <div class="quote-status-menu" id="quoteStatusMenu" role="listbox" aria-label="Selecionar status" hidden></div>
 
     
-    <div id="detailModal" class="modal-overlay" aria-hidden="true">
-        <div class="modal-card">
-            <div class="modal-header">
-                <div class="modal-user-profile">
-                    <div id="modalAvatar" class="avatar-circle modal-avatar">AB</div>
-                    <div class="modal-user-details">
-                        <h2 id="modalName">Nome do Candidato</h2>
-                        <p id="modalRole">Cargo / Função</p>
-                    </div>
-                </div>
-                <button id="closeModalBtn" class="modal-close-btn" title="Fechar Modal">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="modal-body">
-                
-                <div>
-                    <div class="modal-section-title">
-                        <i class="fa-solid fa-address-card"></i> Informações de Contato
-                    </div>
-                    <div class="contact-grid">
-                        <div class="contact-card">
-                            <div class="contact-info">
-                                <div class="label">Telefone / WhatsApp</div>
-                                <div id="modalPhone" class="val">(00) 00000-0000</div>
-                            </div>
-                            <a id="modalPhoneBtn" href="#" target="_blank" class="btn-shortcut" title="Ligar / WhatsApp">
-                                <i class="fa-solid fa-phone"></i>
-                            </a>
-                        </div>
-                        <div class="contact-card">
-                            <div class="contact-info">
-                                <div class="label">E-mail de Contato</div>
-                                <div id="modalEmail" class="val">email@exemplo.com</div>
-                            </div>
-                            <a id="modalEmailBtn" href="#" class="btn-shortcut" title="Enviar E-mail">
-                                <i class="fa-solid fa-envelope"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="modal-section-title">
-                        <i class="fa-solid fa-file-image"></i> Currículo Anexo
-                    </div>
-                    <div class="pdf-card">
-                        <div class="pdf-file-details">
-                            <div class="pdf-icon-box">
-                                <i class="fa-solid fa-file-image"></i>
-                            </div>
-                            <div>
-                                <div id="modalPdfName" class="pdf-file-name">Curriculo_Documento.pdf</div>
-                                <div id="modalPdfMeta" class="pdf-file-meta">Tamanho: 1.8 MB • Enviado recentemente</div>
-                            </div>
-                        </div>
-                        <div class="pdf-actions">
-                            <button class="btn-pdf" onclick="window.simulatePdfAction('Visualizar')">
-                                <i class="fa-solid fa-eye"></i> Visualizar
-                            </button>
-                            <button class="btn-pdf" onclick="window.simulatePdfAction('Download')">
-                                <i class="fa-solid fa-download"></i> Baixar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="modal-section-title">
-                        <i class="fa-solid fa-comments"></i> Histórico da Mensagem
-                    </div>
-                    <div class="message-box">
-                        <div id="modalMessageText" class="message-content">
-                            Carregando mensagem do candidato...
-                        </div>
-                       
-                        <div class="quick-reply-area">
-                            <textarea id="replyTextarea" class="reply-textarea" placeholder="Escreva uma resposta rápida para este contato..."></textarea>
-                           
-                            <div class="reply-actions-bar">
-                                <div class="modal-status-wrapper">
-                                    <span>Status:</span>
-                                    <select id="modalStatusSelect" class="status-select">
-                                        <option value="CONCLUÍDO">CONCLUÍDO</option>
-                                        <option value="PENDENTE">PENDENTE</option>
-                                        <option value="RECUSADO">RECUSADO</option>
-                                    </select>
-                                </div>
-
-                                <div class="modal-actions-right">
-                                    <button id="modalDeleteBtn" class="btn-delete-modal" title="Excluir Candidato">
-                                        <i class="fa-solid fa-trash"></i> Apagar
-                                    </button>
-                                    <button id="sendReplyBtn" class="btn-send-reply">
-                                        <i class="fa-solid fa-paper-plane"></i> Responder
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="quote-detail-overlay" id="candidateDetail" hidden aria-hidden="true">
+        <button class="quote-detail-backdrop" data-close-candidate aria-label="Fechar detalhes"></button>
+        <aside class="quote-detail-panel" role="dialog" aria-modal="true" aria-labelledby="candidateDetailTitle">
+            <header><div><span class="commercial-eyebrow">FICHA DO CANDIDATO</span><h2 id="candidateDetailTitle">Candidato</h2></div><button class="quote-close" data-close-candidate aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></header>
+            <div class="quote-detail-content" id="candidateDetailContent"></div>
+        </aside>
     </div>
 
     <footer class="api-status-footer" aria-live="polite">
@@ -552,7 +414,7 @@
 
     <div id="toastContainer" class="toast-container"></div>
 
-    <script type="module" src="comercial.js?v=20261126"></script>
-    <script type="module" src="gerenciaCandidatos.js?v=202611181938"></script>
+    <script type="module" src="comercial.js?v=20261126-ui3"></script>
+    <script type="module" src="gerenciaCandidatos.js?v=20261126-ui3"></script>
 </body>
 </html>
