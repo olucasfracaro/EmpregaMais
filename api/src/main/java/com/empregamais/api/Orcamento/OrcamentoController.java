@@ -166,6 +166,26 @@ public class OrcamentoController {
         return ResponseEntity.notFound().build();
     }
 
+    @DeleteMapping("/{id}/com-solicitante")
+    @Transactional
+    public ResponseEntity<String> deletarOrcamentoESolicitante(@PathVariable Long id) {
+        Optional<Orcamento> encontrado = orcamentoService.buscarOrcamentoPorId(id);
+        if (encontrado.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Orcamento orcamento = encontrado.get();
+        Long solicitanteId = orcamento.getSolicitante().getId();
+        if (orcamentoService.possuiOutroOrcamentoDoSolicitante(solicitanteId, id)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body("Este solicitante está associado a outros orçamentos; nenhum dado foi apagado.");
+        }
+
+        orcamentoService.deletarOrcamento(id);
+        solicitanteService.deletarSolicitante(solicitanteId);
+        return ResponseEntity.noContent().build();
+    }
+
     private Solicitante buscarSolicitante(Long id) {
         if (id == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "solicitanteId é obrigatório");

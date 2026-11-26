@@ -36,4 +36,8 @@ public class OrcamentoService {
     public List<Orcamento> buscarOrcamentos() {
         return repository.findAll();
     }
+
+    public boolean possuiOutroOrcamentoDoSolicitante(Long solicitanteId, Long orcamentoId) {
+        return repository.existsBySolicitante_IdAndIdNot(solicitanteId, orcamentoId);
+    }
 }

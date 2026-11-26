@@ -124,6 +124,60 @@ const gerenciarView = document.getElementById('gerenciarView');
 const acompanharView = document.getElementById('acompanharView');
 const comercialView = document.getElementById('comercialView');
 const analysisGrid = document.getElementById('analysisGrid');
+const adminDashboardMemoryKey = 'empregamais-admin-dashboard-v1';
+let adminDashboardMemory = { module: 'gerenciar', scrollByModule: {} };
+let activeModule = 'gerenciar';
+let rememberAdminDashboard = false;
+let dashboardMemoryReady = false;
+let dashboardScrollTimer;
+
+function readAdminDashboardMemory() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(adminDashboardMemoryKey) || '{}');
+        if (saved && typeof saved === 'object') {
+            adminDashboardMemory = {
+                module: typeof saved.module === 'string' ? saved.module : 'gerenciar',
+                scrollByModule: saved.scrollByModule && typeof saved.scrollByModule === 'object'
+                    ? saved.scrollByModule
+                    : {}
+            };
+        }
+    } catch (error) {
+        console.warn('Não foi possível restaurar a última aba do administrador:', error);
+    }
+}
+
+function saveAdminDashboardMemory() {
+    if (!rememberAdminDashboard) return;
+    adminDashboardMemory.module = activeModule;
+    adminDashboardMemory.scrollByModule[activeModule] = window.scrollY;
+    persistAdminDashboardMemory();
+}
+
+function persistAdminDashboardMemory() {
+    if (!rememberAdminDashboard) return;
+    try {
+        localStorage.setItem(adminDashboardMemoryKey, JSON.stringify(adminDashboardMemory));
+    } catch (error) {
+        console.warn('Não foi possível salvar a última aba do administrador:', error);
+    }
+}
+
+function restoreAdminModuleScroll() {
+    if (!rememberAdminDashboard) return;
+    const savedY = Number(adminDashboardMemory.scrollByModule[activeModule]) || 0;
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, savedY)));
+}
+
+window.addEventListener('scroll', () => {
+    if (!rememberAdminDashboard || !dashboardMemoryReady) return;
+    clearTimeout(dashboardScrollTimer);
+    dashboardScrollTimer = setTimeout(saveAdminDashboardMemory, 140);
+}, { passive: true });
+window.addEventListener('pagehide', saveAdminDashboardMemory);
+window.addEventListener('empregamais:commercial-loaded', () => {
+    if (activeModule === 'comercial') restoreAdminModuleScroll();
+});
 
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
@@ -835,6 +889,11 @@ function podeAcessarModulo(role, module) {
 function mostrarModulo(module) {
     if (!module) return;
 
+    if (dashboardMemoryReady && module !== activeModule) {
+        clearTimeout(dashboardScrollTimer);
+        saveAdminDashboardMemory();
+    }
+
     const views = {
         gerenciar: gerenciarView,
         acompanhar: acompanharView,
@@ -844,12 +903,19 @@ function mostrarModulo(module) {
     Object.entries(views).forEach(([name, view]) => {
         if (view) view.hidden = name !== module;
     });
+    activeModule = module;
+    if (dashboardMemoryReady) {
+        adminDashboardMemory.module = module;
+        persistAdminDashboardMemory();
+    }
 
     moduleTabs.forEach(tab => {
         const active = tab.dataset.module === module;
         tab.classList.toggle('active', active);
         tab.setAttribute('aria-current', active ? 'page' : 'false');
     });
+
+    if (dashboardMemoryReady) restoreAdminModuleScroll();
 }
 
 async function carregarAnalises() {
@@ -889,10 +955,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     setupDarkMode();
-    carregarDadosIniciais();
 
     const role = session.user?.app_metadata?.role
         ?? session.user?.user_metadata?.role;
+
+    rememberAdminDashboard = role === ROLES.ADMIN;
+    if (rememberAdminDashboard) readAdminDashboardMemory();
 
     if (nomeUsuario) nomeUsuario.textContent = ROLE_NAMES[role] ?? "Usuário";
     if (avatarUsuario) avatarUsuario.textContent = ROLE_AVATARS[role] ?? "USU";
@@ -917,15 +985,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             podeAcessarModulo(role, module)
         ) ?? 'gerenciar';
     }
+    if (rememberAdminDashboard && podeAcessarModulo(role, adminDashboardMemory.module)) {
+        moduloInicial = adminDashboardMemory.module;
+    }
     mostrarModulo(moduloInicial);
+    dashboardMemoryReady = rememberAdminDashboard;
+    restoreAdminModuleScroll();
 
     if (podeAcessarModulo(role, 'gerenciar')) {
         verificarStatusApi();
         setInterval(atualizarStatusETabela, 60 * 3000);
-        carregarDadosIniciais();
+        await carregarDadosIniciais();
     }
 
-    if (moduloInicial === 'acompanhar') carregarAnalises();
+    if (moduloInicial === 'acompanhar') await carregarAnalises();
+    restoreAdminModuleScroll();
 
     if (searchInput) searchInput.addEventListener('input', renderTable);
     if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);

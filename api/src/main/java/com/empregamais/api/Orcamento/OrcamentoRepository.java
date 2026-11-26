@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OrcamentoRepository extends JpaRepository<Orcamento, Long> {
+    boolean existsBySolicitante_IdAndIdNot(Long solicitanteId, Long orcamentoId);
 }

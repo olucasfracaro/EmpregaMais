@@ -168,29 +168,60 @@
         .nav-profile {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-weight: 600;
-            color: #334155;
-            font-size: 0.95rem;
+            gap: 10px;
+            padding: 6px 7px 6px 8px;
+            border: 1px solid #e8edf3;
+            border-radius: 13px;
+            background: #f8fafc;
+            color: #1e293b;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
+        }
+
+        .nav-profile-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .nav-profile-label {
+            color: #94a3b8;
+            font-size: 0.59rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        #nome_usuario {
+            max-width: 150px;
+            overflow: hidden;
+            font-size: 0.77rem;
+            font-weight: 700;
+            line-height: 1.25;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .nav-profile .nav-logout {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border: 0;
-            border-radius: 50%;
-            background: #f1f5f9;
+            border-radius: 9px;
+            background: #ffffff;
             color: #64748b;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s, color 0.2s;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.07);
+            transition: background 0.2s, color 0.2s, transform 0.2s;
         }
 
         .nav-profile .nav-logout:hover {
             background: #fee2e2;
             color: #dc2626;
+            transform: translateY(-1px);
         }
 
         body.dark-mode .nav-profile .nav-logout {
@@ -204,15 +235,31 @@
         }
         
         .nav-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background-color: #d32f2f;
+            width: 35px;
+            height: 35px;
+            flex: 0 0 35px;
+            border-radius: 11px;
+            background: linear-gradient(145deg, #ef4444, #b91c1c);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            font-size: 0.69rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        @media (max-width: 760px) {
+            .main-navbar { gap: 12px; padding: 0.75rem 1rem; flex-wrap: wrap; }
+            .nav-links { order: 3; width: 100%; justify-content: center; gap: clamp(12px, 5vw, 28px); }
+            .nav-profile { margin-left: auto; }
+        }
+
+        @media (max-width: 420px) {
+            .nav-profile-copy { display: none; }
+            .nav-profile { gap: 6px; padding: 5px; }
+            .nav-links { gap: 15px; }
+            .nav-tab { font-size: 0.78rem; }
         }
     </style>
 </head>
@@ -230,10 +277,10 @@
             <li><button type="button" class="nav-tab" data-module="comercial"><i class="fa-solid fa-handshake"></i> Comercial</button></li>
         </ul>
 
-        <div class="nav-profile">
+        <div class="nav-profile" aria-label="Perfil conectado">
             <div class="nav-avatar" id="avatar_usuario">RH</div>
-            <span id="nome_usuario">Recursos Humanos</span>
-            <button id="logoutBtn" class="nav-logout" title="Sair / Logout" aria-label="Sair">
+            <div class="nav-profile-copy"><span class="nav-profile-label">Conectado como</span><span id="nome_usuario">Recursos Humanos</span></div>
+            <button id="logoutBtn" class="nav-logout" title="Sair da conta" aria-label="Sair da conta">
                 <i class="fa-solid fa-right-from-bracket"></i>
             </button>
         </div>
@@ -362,11 +409,11 @@
         <main class="commercial-dashboard">
             <header class="commercial-heading">
                 <div><span class="commercial-eyebrow">RELACIONAMENTO E VENDAS</span><h1>Orçamentos</h1><p>Acompanhe solicitações e avance cada oportunidade comercial.</p></div>
-                <button class="commercial-refresh" id="refreshQuotes"><i class="fa-solid fa-rotate-right"></i><span>Atualizar</span></button>
+                <div class="quote-heading-actions"><button class="commercial-save" id="saveQuoteChanges" disabled><i class="fa-solid fa-floppy-disk"></i><span>Salvar alterações</span></button><button class="commercial-refresh" id="refreshQuotes"><i class="fa-solid fa-rotate-right"></i><span>Atualizar</span></button></div>
             </header>
             <section class="quote-metrics" aria-label="Resumo de orçamentos">
                 <article class="quote-metric"><span>Total de solicitações</span><strong id="quoteTotal">—</strong><i class="fa-solid fa-layer-group"></i></article>
-                <article class="quote-metric"><span>Novos contatos</span><strong id="quoteNew">—</strong><i class="fa-solid fa-sparkles"></i></article>
+                <article class="quote-metric"><span>Novos contatos</span><strong id="quoteNew">—</strong><i class="fa-solid fa-user-plus"></i></article>
                 <article class="quote-metric"><span>Em andamento</span><strong id="quoteActive">—</strong><i class="fa-solid fa-arrow-trend-up"></i></article>
                 <article class="quote-metric"><span>Ganhos</span><strong id="quoteWon">—</strong><i class="fa-solid fa-circle-check"></i></article>
             </section>
@@ -376,7 +423,7 @@
                     <div class="quote-controls"><label class="quote-search"><i class="fa-solid fa-magnifying-glass"></i><input id="quoteSearch" type="search" placeholder="Buscar empresa, solicitante ou cidade" aria-label="Buscar orçamentos"></label>
                     <select id="quoteFilter" aria-label="Filtrar por status"><option value="todos">Todos os status</option><option>Novo</option><option>Em qualificação</option><option>Visita técnica</option><option>Proposta enviada</option><option>Fechado</option><option>Perdido</option></select></div>
                 </div>
-                <div class="quote-table-wrap"><table class="quote-table"><thead><tr><th>Solicitante</th><th>Obra e soluções</th><th>Recebido</th><th>Status comercial</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="quoteTableBody"></tbody></table></div>
+                <div class="quote-table-wrap"><table class="quote-table"><thead><tr><th data-sort="solicitante">Solicitante</th><th data-sort="cidade">Obra e soluções</th><th data-sort="data">Recebido</th><th data-sort="status">Status comercial</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="quoteTableBody"></tbody></table></div>
                 <div class="quote-empty" id="quoteEmpty" hidden><span class="quote-empty-icon"><i class="fa-regular fa-folder-open"></i></span><strong id="quoteEmptyTitle">Nenhum orçamento por aqui</strong><p id="quoteEmptyText">As novas solicitações aparecerão nesta lista.</p></div>
             </section>
         </main>
@@ -389,6 +436,7 @@
             <div class="quote-detail-content" id="quoteDetailContent"></div>
         </aside>
     </div>
+    <div class="quote-status-menu" id="quoteStatusMenu" role="listbox" aria-label="Selecionar status" hidden></div>
 
     
     <div id="detailModal" class="modal-overlay" aria-hidden="true">
