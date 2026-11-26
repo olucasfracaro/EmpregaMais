@@ -8,5 +8,6 @@ public record OrcamentoRequestDTO(
     Integer pavimentos,
     String solucoesRequeridas,
     String prazo,
-    String observacoes
+    String observacoes,
+    String status
 ) {}

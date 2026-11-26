@@ -60,6 +60,7 @@ public class OrcamentoController {
         novoOrcamento.setSolucoesRequeridas(request.solucoesRequeridas());
         novoOrcamento.setPrazo(request.prazo());
         novoOrcamento.setObservacoes(request.observacoes());
+        if (!isBlank(request.status())) novoOrcamento.setStatus(request.status());
 
         Orcamento salvo = orcamentoService.criarOrcamento(novoOrcamento);
         return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(salvo));
@@ -123,6 +124,7 @@ public class OrcamentoController {
         orcamentoAtualizado.setSolucoesRequeridas(request.solucoesRequeridas());
         orcamentoAtualizado.setPrazo(request.prazo());
         orcamentoAtualizado.setObservacoes(request.observacoes());
+        if (!isBlank(request.status())) orcamentoAtualizado.setStatus(request.status());
 
         return ResponseEntity.ok(toDTO(orcamentoService.atualizarOrcamento(orcamentoAtualizado)));
     }
@@ -150,6 +152,7 @@ public class OrcamentoController {
         }
         if (request.prazo() != null) { orcamentoAtualizado.setPrazo(request.prazo()); }
         if (request.observacoes() != null) { orcamentoAtualizado.setObservacoes(request.observacoes()); }
+        if (request.status() != null) { orcamentoAtualizado.setStatus(request.status()); }
 
         return ResponseEntity.ok(toDTO(orcamentoService.atualizarOrcamento(orcamentoAtualizado)));
     }
@@ -187,7 +190,14 @@ public class OrcamentoController {
             orcamento.getPrazo(),
             orcamento.getObservacoes(),
             orcamento.getCreatedAt(),
-            orcamento.getUpdatedAt()
+            orcamento.getUpdatedAt(),
+            orcamento.getStatus(),
+            orcamento.getSolicitante().getNome(),
+            orcamento.getSolicitante().getEmpresa(),
+            orcamento.getSolicitante().getCargo(),
+            orcamento.getSolicitante().getEmail(),
+            orcamento.getSolicitante().getTelefone(),
+            orcamento.getSolicitante().getHorarioPreferido()
         );
     }
 }

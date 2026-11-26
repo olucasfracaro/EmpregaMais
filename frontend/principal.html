@@ -359,11 +359,35 @@
     </div>
 
     <div id="comercialView" class="module-view" hidden>
-        <section class="module-card">
-            <i class="fa-solid fa-handshake"></i>
-            <h1>Área Comercial</h1>
-            <p>Módulo dedicado ao acompanhamento de clientes, propostas e oportunidades comerciais.</p>
-        </section>
+        <main class="commercial-dashboard">
+            <header class="commercial-heading">
+                <div><span class="commercial-eyebrow">RELACIONAMENTO E VENDAS</span><h1>Orçamentos</h1><p>Acompanhe solicitações e avance cada oportunidade comercial.</p></div>
+                <button class="commercial-refresh" id="refreshQuotes"><i class="fa-solid fa-rotate-right"></i><span>Atualizar</span></button>
+            </header>
+            <section class="quote-metrics" aria-label="Resumo de orçamentos">
+                <article class="quote-metric"><span>Total de solicitações</span><strong id="quoteTotal">—</strong><i class="fa-solid fa-layer-group"></i></article>
+                <article class="quote-metric"><span>Novos contatos</span><strong id="quoteNew">—</strong><i class="fa-solid fa-sparkles"></i></article>
+                <article class="quote-metric"><span>Em andamento</span><strong id="quoteActive">—</strong><i class="fa-solid fa-arrow-trend-up"></i></article>
+                <article class="quote-metric"><span>Ganhos</span><strong id="quoteWon">—</strong><i class="fa-solid fa-circle-check"></i></article>
+            </section>
+            <section class="quote-panel">
+                <div class="quote-toolbar">
+                    <div><h2>Solicitações recebidas</h2><p id="quoteCount">Carregando orçamentos…</p></div>
+                    <div class="quote-controls"><label class="quote-search"><i class="fa-solid fa-magnifying-glass"></i><input id="quoteSearch" type="search" placeholder="Buscar empresa, solicitante ou cidade" aria-label="Buscar orçamentos"></label>
+                    <select id="quoteFilter" aria-label="Filtrar por status"><option value="todos">Todos os status</option><option>Novo</option><option>Em qualificação</option><option>Visita técnica</option><option>Proposta enviada</option><option>Fechado</option><option>Perdido</option></select></div>
+                </div>
+                <div class="quote-table-wrap"><table class="quote-table"><thead><tr><th>Solicitante</th><th>Obra e soluções</th><th>Recebido</th><th>Status comercial</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="quoteTableBody"></tbody></table></div>
+                <div class="quote-empty" id="quoteEmpty" hidden><span class="quote-empty-icon"><i class="fa-regular fa-folder-open"></i></span><strong id="quoteEmptyTitle">Nenhum orçamento por aqui</strong><p id="quoteEmptyText">As novas solicitações aparecerão nesta lista.</p></div>
+            </section>
+        </main>
+    </div>
+
+    <div class="quote-detail-overlay" id="quoteDetail" hidden aria-hidden="true">
+        <button class="quote-detail-backdrop" data-close-quote aria-label="Fechar detalhes"></button>
+        <aside class="quote-detail-panel" role="dialog" aria-modal="true" aria-labelledby="quoteDetailTitle">
+            <header><div><span class="commercial-eyebrow">DETALHES DA OPORTUNIDADE</span><h2 id="quoteDetailTitle">Orçamento</h2></div><button class="quote-close" data-close-quote aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></header>
+            <div class="quote-detail-content" id="quoteDetailContent"></div>
+        </aside>
     </div>
 
     
@@ -480,6 +504,7 @@
 
     <div id="toastContainer" class="toast-container"></div>
 
+    <script type="module" src="comercial.js?v=20261126"></script>
     <script type="module" src="gerenciaCandidatos.js?v=202611181938"></script>
 </body>
 </html>

@@ -56,6 +56,7 @@ package "SQL" <<Frame>> #DDDDDD {
         * **solucoes_requeridas** : text <<NOT NULL>>
         * **prazo** : text <<DEFAULT ''>>
         * **observacoes** : text <<DEFAULT ''>>
+        * **status** : text <<NOT NULL, DEFAULT 'Novo'>>
         --
         * **created_at** : timestamptz <<NOT NULL, DEFAULT now()>>
         * **updated_at** : timestamptz <<DEFAULT now()>>

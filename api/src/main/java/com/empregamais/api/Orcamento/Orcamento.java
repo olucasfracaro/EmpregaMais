@@ -37,6 +37,8 @@ public class Orcamento {
     private String prazo;
     @Column(name = "observacoes", nullable = true)
     private String observacoes;
+    @Column(name = "status", nullable = false)
+    private String status = "Novo";
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -71,6 +73,8 @@ public class Orcamento {
 
     public String getObservacoes() { return observacoes; }
     public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }

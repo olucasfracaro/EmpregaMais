@@ -13,5 +13,12 @@ public record OrcamentoResponseDTO(
     String prazo,
     String observacoes,
     OffsetDateTime createdAt,
-    OffsetDateTime updatedAt
+    OffsetDateTime updatedAt,
+    String status,
+    String solicitanteNome,
+    String solicitanteEmpresa,
+    String solicitanteCargo,
+    String solicitanteEmail,
+    String solicitanteTelefone,
+    String solicitanteHorarioPreferido
 ) {}

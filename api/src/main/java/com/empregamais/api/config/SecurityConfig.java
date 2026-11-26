@@ -57,6 +57,7 @@ public class SecurityConfig {
                     "/loginUsuario.js",
                     "/auth.js",
                     "/gerenciaCandidatos.js",
+                    "/comercial.js",
                     "/envioOrcamento.js",
                     "/style.css",
                     "/style_principal.css",
