@@ -79,7 +79,11 @@
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>3.0.1</version>
-		</dependency>
+        </dependency>
+        <dependency>
+            <groupId>org.reactivestreams</groupId>
+            <artifactId>reactive-streams</artifactId>
+        </dependency>
 	</dependencies>
 
 	<build>

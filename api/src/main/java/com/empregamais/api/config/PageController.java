@@ -5,6 +5,8 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @Controller
 public class PageController {
 
@@ -26,11 +28,14 @@ public class PageController {
     }
 
     @GetMapping("/principal")
-    public String principalPage() {
-        if (isLocal) {
+    public String principalPage(HttpServletRequest request) {
+        String base = frontendUrl == null ? "" : frontendUrl.replaceAll("/+$", "");
+        String self = request.getScheme() + "://" + request.getHeader("Host");
+    
+        if (base.isBlank() || base.equalsIgnoreCase(self)) {
             return "forward:/principal.html";
         }
-        return "redirect:" + frontendUrl + "/principal";
+        return "redirect:" + base + "/principal";
     }
 
     @GetMapping("/cadastro")

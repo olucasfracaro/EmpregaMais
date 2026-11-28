@@ -15,7 +15,7 @@ import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.util.UriUtils;
+import org.springframework.web.util.UriUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
@@ -158,9 +158,9 @@ public class AnaliseCurriculoService {
                 throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "O caminho do currículo não é válido.");
             }
         }
-        String caminhoCodificado = String.join("/", java.util.Arrays.stream(partes)
+        String caminhoCodificado = java.util.Arrays.stream(partes)
             .map(parte -> UriUtils.encodePathSegment(parte, StandardCharsets.UTF_8))
-            .toList());
+            .collect(java.util.stream.Collectors.joining("/"));
         return URI.create(supabaseUrl + "/storage/v1/object/public/curriculos/" + caminhoCodificado);
     }
 
