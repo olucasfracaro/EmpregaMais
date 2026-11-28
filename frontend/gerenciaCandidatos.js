@@ -87,6 +87,8 @@ let campoOrdenacao = 'nome';
 let direcaoOrdenacao = 'asc';
 let visualizacaoAtual = 0;
 let activeCandidateId = null;
+let usuarioLogadoRole = null;
+let carregandoAnalises = false;
 
 
 const tableBody = document.getElementById('tableBody');
@@ -105,6 +107,7 @@ const closeCurriculumModalButton = document.getElementById('closeCurriculumModal
 
 const candidateDetail = document.getElementById('candidateDetail');
 const candidateDetailContent = document.getElementById('candidateDetailContent');
+const candidatosDetalhesRemotos = new Map();
 const toastContainer = document.getElementById('toastContainer');
 
 const statTotalVal = document.getElementById('statTotalVal');
@@ -120,6 +123,12 @@ const gerenciarView = document.getElementById('gerenciarView');
 const acompanharView = document.getElementById('acompanharView');
 const comercialView = document.getElementById('comercialView');
 const analysisGrid = document.getElementById('analysisGrid');
+if (analysisGrid) {
+    analysisGrid.addEventListener('click', event => {
+        const candidateLink = event.target.closest('[data-analysis-candidate-id]');
+        if (candidateLink) abrirFichaCandidatoDaAnalise(candidateLink.dataset.analysisCandidateId, candidateLink.dataset.analysisId, candidateLink);
+    });
+}
 if (candidateDetail) {
     candidateDetail.addEventListener('click', event => {
         if (event.target.closest('[data-close-candidate]')) {
@@ -607,11 +616,12 @@ window.handleTableStatusChange = function(selectElem, id) {
 };
 
 window.openCandidateModal = function(id) {
-    const candidate = candidatos.find(c => String(c.id) === String(id));
+    const candidate = candidatos.find(c => String(c.id) === String(id)) || candidatosDetalhesRemotos.get(String(id));
     if (!candidate || !candidateDetail || !candidateDetailContent) return;
 
     activeCandidateId = candidate.id;
 
+    const podeGerenciarCandidato = [ROLES.ADMIN, ROLES.GESTOR, ROLES.RH].includes(usuarioLogadoRole);
     const marcadoParaExclusao = exclusoesPendentes.has(Number(candidate.id));
     const info = (titulo, valor, icone, idElemento = '') => `<div class="quote-detail-item"><span class="quote-detail-icon"><i class="fa-solid ${icone}"></i></span><div><small>${titulo}</small><strong${idElemento ? ` id="${idElemento}"` : ''}>${escaparHtml(valor || 'Não informado')}</strong></div></div>`;
 
@@ -620,17 +630,17 @@ window.openCandidateModal = function(id) {
     const email = candidate.email ? sanitizeEmail(candidate.email) : '';
     const arquivo = candidate.curriculoPath ? candidate.curriculoPath.split('/').pop() : '';
     const iconeArquivo = curriculoEhImagem(candidate.curriculoPath) ? 'fa-file-image' : 'fa-file-pdf';
-    const podeAnalisarCurriculo = Boolean(arquivo && /\.pdf$/i.test(arquivo) && !usandoDadosFicticios());
+    const podeAnalisarCurriculo = Boolean(podeGerenciarCandidato && arquivo && /\.pdf$/i.test(arquivo) && !usandoDadosFicticios());
     const motivoAnaliseIndisponivel = !arquivo || !/\.pdf$/i.test(arquivo)
         ? 'Este candidato não possui um currículo PDF válido.'
         : 'A análise só pode ser iniciada com candidatos carregados da API.';
 
     candidateDetailContent.innerHTML = `
-        <section class="quote-detail-status${marcadoParaExclusao ? ' is-locked' : ''}"><span>Status atual</span>${window.renderStatusDropdown(candidate.id, candidate.status, 'detail', 'candidate')}</section>
+        ${podeGerenciarCandidato ? `<section class="quote-detail-status${marcadoParaExclusao ? ' is-locked' : ''}"><span>Status atual</span>${window.renderStatusDropdown(candidate.id, candidate.status, 'detail', 'candidate')}</section>` : ''}
         <section class="quote-detail-section"><h3><i class="fa-regular fa-address-card"></i> Candidato</h3><div class="quote-detail-person"><span class="quote-avatar">${escaparHtml(getInitials(candidate.nome))}</span><div><strong>${escaparHtml(candidate.nome || 'Candidato sem nome')}</strong><span>${escaparHtml(candidate.cargo || '')}</span></div></div>${info('E-mail', email, 'fa-envelope')}${email ? `<a class="quote-contact-link" href="mailto:${escaparHtml(email)}"><i class="fa-regular fa-paper-plane"></i> Enviar e-mail</a>` : ''}${info('Telefone', telefone, 'fa-phone')}${telefoneDigitos ? `<a class="quote-contact-link" href="https://wa.me/55${telefoneDigitos}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Conversar no WhatsApp</a>` : ''}</section>
-        <section class="quote-detail-section"><h3><i class="fa-solid fa-file-lines"></i> Currículo</h3>${info('Arquivo', arquivo || 'Currículo não disponível', iconeArquivo)}${arquivo ? `<div><button class="quote-contact-link" type="button" data-pdf-action="Visualizar"><i class="fa-regular fa-eye"></i> Visualizar currículo</button></div><div><button class="quote-contact-link" type="button" data-pdf-action="Download"><i class="fa-solid fa-download"></i> Baixar currículo</button></div>` : ''}<div><button class="quote-contact-link candidate-analyze-button" type="button" data-analyze-candidate="${escaparHtml(candidate.id)}" ${podeAnalisarCurriculo ? '' : 'disabled'} title="${podeAnalisarCurriculo ? 'Enviar este currículo para análise' : motivoAnaliseIndisponivel}"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Analisar currículo</span></button></div>${info('Tamanho', candidate.pdfSize || (arquivo ? (usandoDadosFicticios() ? 'Indisponível (dados fictícios)' : 'Calculando…') : ''), 'fa-weight-hanging', 'candidatePdfSize')}${info('Enviado em', candidate.dataEnvio, 'fa-calendar')}</section>
+        <section class="quote-detail-section"><h3><i class="fa-solid fa-file-lines"></i> Currículo</h3>${info('Arquivo', arquivo || 'Currículo não disponível', iconeArquivo)}${arquivo ? `<div><button class="quote-contact-link" type="button" data-pdf-action="Visualizar"><i class="fa-regular fa-eye"></i> Visualizar currículo</button></div><div><button class="quote-contact-link" type="button" data-pdf-action="Download"><i class="fa-solid fa-download"></i> Baixar currículo</button></div>` : ''}${podeGerenciarCandidato ? `<div class="candidate-criteria"><label for="analysisCriteria_${escaparHtml(candidate.id)}"><i class="fa-solid fa-bullseye"></i> Competências desejáveis</label><textarea id="analysisCriteria_${escaparHtml(candidate.id)}" data-analysis-criteria="${escaparHtml(candidate.id)}" maxlength="1000" rows="3" placeholder="Ex.: Java, Spring, APIs REST"></textarea><small>Separe por vírgula ou linha. A análise destacará evidências encontradas no currículo.</small></div><div><button class="quote-contact-link candidate-analyze-button" type="button" data-analyze-candidate="${escaparHtml(candidate.id)}" ${podeAnalisarCurriculo ? '' : 'disabled'} title="${podeAnalisarCurriculo ? 'Enviar este currículo para análise' : motivoAnaliseIndisponivel}"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Analisar currículo</span></button></div>` : ''}${info('Tamanho', candidate.pdfSize || (arquivo ? (usandoDadosFicticios() ? 'Indisponível (dados fictícios)' : 'Calculando…') : ''), 'fa-weight-hanging', 'candidatePdfSize')}${info('Enviado em', candidate.dataEnvio, 'fa-calendar')}</section>
         <section class="quote-detail-section"><h3><i class="fa-solid fa-comments"></i> Mensagem</h3><div class="quote-detail-notes"><small>Mensagem do candidato</small><p>${escaparHtml(candidate.mensagem || 'Nenhuma mensagem enviada.')}</p></div></section>
-        <section class="quote-delete-section"><div><strong>Excluir candidato</strong><p>Marca o candidato e o currículo anexo para exclusão. Nada é apagado até você salvar as alterações.</p></div><button type="button" data-candidate-delete>${marcadoParaExclusao ? '<i class="fa-solid fa-rotate-left"></i> Desfazer exclusão' : '<i class="fa-regular fa-trash-can"></i> Apagar candidato'}</button></section>
+        ${podeGerenciarCandidato ? `<section class="quote-delete-section"><div><strong>Excluir candidato</strong><p>Marca o candidato e o currículo anexo para exclusão. Nada é apagado até você salvar as alterações.</p></div><button type="button" data-candidate-delete>${marcadoParaExclusao ? '<i class="fa-solid fa-rotate-left"></i> Desfazer exclusão' : '<i class="fa-regular fa-trash-can"></i> Apagar candidato'}</button></section>` : ''}
         <footer class="quote-detail-footer">Candidatura #${escaparHtml(candidate.id)} · Enviada em ${escaparHtml(candidate.dataEnvio || 'data indisponível')}</footer>`;
 
     candidateDetail.hidden = false;
@@ -641,6 +651,25 @@ window.openCandidateModal = function(id) {
     if (arquivo && !candidate.pdfSize) atualizarTamanhoCurriculo(candidate);
 };
 
+async function abrirFichaCandidatoDaAnalise(id, analysisId, button) {
+    if (button) button.disabled = true;
+    try {
+        let candidate = candidatos.find(item => String(item.id) === String(id)) || candidatosDetalhesRemotos.get(String(id));
+        if (!candidate) {
+            const response = await authenticatedFetch(`${API_BASE_URL}/acompanhar/analises/${encodeURIComponent(analysisId)}/candidato`);
+            if (!response.ok) throw new Error(response.status === 404 ? 'Candidato não encontrado.' : `Não foi possível abrir a ficha (${response.status}).`);
+            const [normalizado] = normalizarDados([await response.json()]);
+            candidate = normalizado;
+            candidatosDetalhesRemotos.set(String(id), candidate);
+        }
+        window.openCandidateModal(candidate.id);
+    } catch (error) {
+        showToast(error.message || 'Não foi possível abrir a ficha do candidato.', 'fa-triangle-exclamation');
+    } finally {
+        if (button?.isConnected) button.disabled = false;
+    }
+}
+
 async function analisarCurriculoCandidato(candidatoId, button) {
     const candidato = candidatos.find(item => String(item.id) === String(candidatoId));
     if (!candidato || !button || button.disabled) return;
@@ -650,7 +679,11 @@ async function analisarCurriculoCandidato(candidatoId, button) {
     button.classList.add('is-analyzing');
     button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Analisando currículo…</span>';
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/acompanhar/analises/candidatos/${encodeURIComponent(candidatoId)}`, { method: 'POST' });
+        const criteriosRevisao = document.getElementById(`analysisCriteria_${candidatoId}`)?.value.trim() || '';
+        const response = await authenticatedFetch(`${API_BASE_URL}/acompanhar/analises/candidatos/${encodeURIComponent(candidatoId)}`, {
+            method: 'POST',
+            body: JSON.stringify({ criteriosRevisao })
+        });
         let resultado;
         try { resultado = await response.json(); } catch { resultado = {}; }
         if (!response.ok) throw new Error(resultado.detail || resultado.message || `Não foi possível iniciar a análise (HTTP ${response.status}).`);
@@ -803,9 +836,8 @@ window.simulatePdfAction = function(action) {
         return;
     }
 
-    const candidate = candidatos.find(
-        c => c.id === activeCandidateId
-    );
+    const candidate = candidatos.find(c => String(c.id) === String(activeCandidateId))
+        || candidatosDetalhesRemotos.get(String(activeCandidateId));
 
     if (!candidate) return;
 
@@ -1033,7 +1065,15 @@ function mostrarModulo(module) {
 }
 
 async function carregarAnalises() {
-    if (!analysisGrid) return;
+    if (!analysisGrid || carregandoAnalises) return;
+    carregandoAnalises = true;
+    const refreshButton = document.getElementById('refreshAnalyses');
+    const refreshContent = refreshButton?.innerHTML;
+    analysisGrid.setAttribute('aria-busy', 'true');
+    if (refreshButton) {
+        refreshButton.disabled = true;
+        refreshButton.innerHTML = '<i class="fa-solid fa-rotate-right fa-spin"></i><span>Atualizando…</span>';
+    }
 
     try {
         let analises;
@@ -1053,6 +1093,13 @@ async function carregarAnalises() {
         analysisGrid.innerHTML = '<p class="analysis-notice">Não foi possível carregar as análises. Tente novamente.</p>';
         document.getElementById('analysisCount')?.replaceChildren(document.createTextNode('Falha ao carregar as análises'));
         document.getElementById('analysisEmpty')?.setAttribute('hidden', '');
+    } finally {
+        carregandoAnalises = false;
+        analysisGrid.setAttribute('aria-busy', 'false');
+        if (refreshButton) {
+            refreshButton.disabled = false;
+            refreshButton.innerHTML = refreshContent;
+        }
     }
 }
 
@@ -1076,6 +1123,47 @@ function atualizarResumoAnalises() {
     document.getElementById('analysisRunning')?.replaceChildren(document.createTextNode(String(totais.andamento)));
     document.getElementById('analysisCompleted')?.replaceChildren(document.createTextNode(String(totais.concluida)));
     document.getElementById('analysisFailed')?.replaceChildren(document.createTextNode(String(totais.falha)));
+}
+function obterListaResultado(resultado, campo) {
+    const valor = resultado?.[campo];
+    if (Array.isArray(valor)) return valor.filter(item => item != null && String(item).trim());
+    return valor == null || String(valor).trim() === '' ? [] : [valor];
+}
+function renderizarListaResultado(itens) {
+    if (!itens.length) return '';
+    return `<ul>${itens.map(item => `<li>${escaparTextoAnalise(item)}</li>`).join('')}</ul>`;
+}
+function renderizarCompetenciasResultado(itens, tipo) {
+    if (!itens.length) return '';
+    return `<div class="analysis-result-chips">${itens.map(item => `<span class="analysis-result-chip is-${tipo}"><i class="fa-solid ${tipo === 'found' ? 'fa-check' : 'fa-minus'}"></i>${escaparTextoAnalise(item)}</span>`).join('')}</div>`;
+}
+function renderizarResultadoAnalise(analise) {
+    if (analise.erro) return `<div class="analysis-result is-error"><div class="analysis-result-heading"><i class="fa-solid fa-triangle-exclamation"></i><strong>Não foi possível concluir</strong></div><p>${escaparTextoAnalise(analise.erro)}</p></div>`;
+    const resultado = analise.resultado && typeof analise.resultado === 'object' ? analise.resultado : {};
+    const relatorio = resultado['Relatório'] || resultado.relatorio || (typeof analise.resultado === 'string' ? analise.resultado : 'O serviço não retornou um resumo para esta análise.');
+    const area = resultado['Área'] || resultado.area;
+    const habilidades = obterListaResultado(resultado, 'Habilidades').length
+        ? obterListaResultado(resultado, 'Habilidades')
+        : obterListaResultado(resultado, 'habilidades');
+    const desejaveis = obterListaResultado(resultado, 'Critérios desejáveis');
+    const localizadas = obterListaResultado(resultado, 'Competências localizadas');
+    const semEvidencia = obterListaResultado(resultado, 'Competências sem evidência textual');
+    const formacao = obterListaResultado(resultado, 'Formação').length
+        ? obterListaResultado(resultado, 'Formação')
+        : obterListaResultado(resultado, 'formacao');
+    const experiencia = obterListaResultado(resultado, 'Experiência').length
+        ? obterListaResultado(resultado, 'Experiência')
+        : obterListaResultado(resultado, 'experiencia');
+    const fonte = resultado['Fonte do resumo'] || resultado.fonte_resumo;
+
+    return `<div class="analysis-result">
+        <section class="analysis-result-summary"><span><i class="fa-solid fa-align-left"></i> Resumo do currículo</span><p>${escaparTextoAnalise(relatorio)}</p></section>
+        ${area ? `<div class="analysis-result-area"><span>Área identificada</span><strong>${escaparTextoAnalise(area)}</strong></div>` : ''}
+        ${habilidades.length ? `<section class="analysis-result-section"><h4>Competências identificadas</h4>${renderizarCompetenciasResultado(habilidades, 'found')}</section>` : ''}
+        ${desejaveis.length ? `<section class="analysis-result-section analysis-result-desired"><h4>Competências desejáveis <small>${localizadas.length} de ${desejaveis.length} com evidência textual</small></h4>${renderizarCompetenciasResultado(localizadas, 'found')}${renderizarCompetenciasResultado(semEvidencia, 'missing')}<p>Os termos são localizados no texto do currículo. A ausência de evidência não confirma falta de experiência ou proficiência.</p></section>` : ''}
+        ${(formacao.length || experiencia.length) ? `<div class="analysis-result-details">${formacao.length ? `<section class="analysis-result-section"><h4>Formação</h4>${renderizarListaResultado(formacao)}</section>` : ''}${experiencia.length ? `<section class="analysis-result-section"><h4>Experiência</h4>${renderizarListaResultado(experiencia)}</section>` : ''}</div>` : ''}
+        ${fonte ? `<small class="analysis-result-source">${escaparTextoAnalise(fonte)}</small>` : ''}
+    </div>`;
 }
 function renderizarAnalises() {
     if (!analysisGrid) return;
@@ -1103,13 +1191,14 @@ function renderizarAnalises() {
         const tipo = normalizarStatusAnalise(analise);
         const classeStatus = { andamento: 'running', concluida: 'completed', falha: 'failed' }[tipo];
         const status = escaparTextoAnalise(analise.status || 'Não informado');
-        let resultado = analise.resultado;
-        if (resultado && typeof resultado === 'object') resultado = Object.entries(resultado).map(([chave, valor]) => `${chave}: ${typeof valor === 'string' ? valor : JSON.stringify(valor)}`).join(' · ');
-        const descricao = resultado || analise.erro || 'O resultado será exibido quando a análise estiver disponível.';
+        const candidateId = analise.candidatoId;
+        const candidateLink = candidateId && analise.id
+            ? `<button class="analysis-candidate-link" type="button" data-analysis-id="${escaparTextoAnalise(analise.id)}" data-analysis-candidate-id="${escaparTextoAnalise(candidateId)}" aria-label="Abrir ficha do candidato ${escaparTextoAnalise(candidateId)}"><i class="fa-regular fa-address-card"></i><span>Candidato #${escaparTextoAnalise(candidateId)}</span><i class="fa-solid fa-arrow-up-right-from-square"></i></button>`
+            : '<span class="analysis-candidate-unavailable">Candidato não vinculado</span>';
         return `<article class="analysis-card" data-analysis-id="${escaparTextoAnalise(analise.id)}" data-candidate-id="${escaparTextoAnalise(analise.candidatoId)}">
-            <header><div class="analysis-card-title"><strong>Análise #${escaparTextoAnalise(analise.id ?? '—')}</strong><span>Candidato #${escaparTextoAnalise(analise.candidatoId ?? '—')}</span></div><span class="analysis-status is-${classeStatus}">${status}</span></header>
-            <div class="analysis-card-meta"><div><span>Modelo</span><strong title="${escaparTextoAnalise(analise.modelo || '—')}">${escaparTextoAnalise(analise.modelo || '—')}</strong></div><div><span>Iniciada em</span><strong>${formatarDataAnalise(analise.createdAt)}</strong></div><div><span>Finalizada em</span><strong>${formatarDataAnalise(analise.finishedAt)}</strong></div><div><span>Identificação</span><strong>#${escaparTextoAnalise(analise.candidatoId ?? '—')}</strong></div></div>
-            <p class="analysis-result"><strong>${analise.erro ? 'Detalhe do erro' : 'Resultado'}</strong>${escaparTextoAnalise(descricao)}</p>
+            <header><div class="analysis-card-title"><strong>Análise #${escaparTextoAnalise(analise.id ?? '—')}</strong>${candidateLink}</div><span class="analysis-status is-${classeStatus}">${status}</span></header>
+            <div class="analysis-card-meta"><div><span>Modelo</span><strong title="${escaparTextoAnalise(analise.modelo || '—')}">${escaparTextoAnalise(analise.modelo || '—')}</strong></div><div><span>Iniciada em</span><strong>${formatarDataAnalise(analise.createdAt)}</strong></div><div><span>Finalizada em</span><strong>${formatarDataAnalise(analise.finishedAt)}</strong></div></div>
+            ${renderizarResultadoAnalise(analise)}
         </article>`;
     }).join('');
 }
@@ -1135,6 +1224,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const role = session.user?.app_metadata?.role
         ?? session.user?.user_metadata?.role;
+    usuarioLogadoRole = role;
 
     rememberAdminDashboard = role === ROLES.ADMIN;
     if (rememberAdminDashboard) readAdminDashboardMemory();

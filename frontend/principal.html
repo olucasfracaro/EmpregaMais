@@ -145,32 +145,6 @@
             max-width: 620px;
         }
 
-        .analysis-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 16px;
-            margin-top: 24px;
-            text-align: left;
-        }
-
-        .analysis-card {
-            border: 1px solid var(--border-subtle);
-            border-radius: 12px;
-            padding: 18px;
-            background: var(--bg-card);
-            color: var(--text-primary);
-        }
-
-        .analysis-card strong {
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .analysis-card span,
-        .analysis-card p {
-            color: var(--text-secondary);
-        }
-        
         .nav-profile {
             display: flex;
             align-items: center;
@@ -373,7 +347,7 @@
                     <div class="quote-controls"><label class="quote-search"><i class="fa-solid fa-magnifying-glass"></i><input id="analysisSearch" type="search" placeholder="Buscar por ID, candidato ou status" autocomplete="off" aria-label="Buscar análises"></label>
                     <select id="analysisFilter" aria-label="Filtrar análises por status"><option value="todos">Todos os status</option><option value="andamento">Em andamento</option><option value="concluida">Concluídas</option><option value="falha">Com falha</option></select></div>
                 </div>
-                <div id="analysisGrid" class="analysis-grid" aria-live="polite" data-list-endpoint="/acompanhar/analises" data-candidate-endpoint-template="/gerenciar/candidatos/{id}"></div>
+                <div id="analysisGrid" class="analysis-grid" aria-live="polite" aria-busy="false" data-list-endpoint="/acompanhar/analises" data-candidate-endpoint-template="/gerenciar/candidatos/{id}"></div>
                 <div id="analysisEmpty" class="quote-empty" hidden><span class="quote-empty-icon"><i class="fa-regular fa-folder-open"></i></span><strong id="analysisEmptyTitle">Nenhuma análise encontrada</strong><p id="analysisEmptyText">As análises de currículo aparecerão nesta lista.</p></div>
             </section>
         </main>

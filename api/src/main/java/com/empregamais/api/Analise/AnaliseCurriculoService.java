@@ -52,7 +52,7 @@ public class AnaliseCurriculoService {
         this.restClient = RestClient.builder().requestFactory(requestFactory).build();
     }
 
-    public Analise analisarCandidato(Long candidatoId) {
+    public Analise analisarCandidato(Long candidatoId, String criteriosRevisao) {
         Candidato candidato = candidatoService.buscarCandidatoPorId(candidatoId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Candidato não encontrado."));
         String caminhoCurriculo = candidato.getCurriculoPath();
@@ -74,7 +74,7 @@ public class AnaliseCurriculoService {
 
         try {
             byte[] pdf = baixarCurriculo(uriArquivo);
-            Map<String, Object> resultado = solicitarAnalise(pdf, nomeArquivo);
+            Map<String, Object> resultado = solicitarAnalise(pdf, nomeArquivo, criteriosRevisao);
             analise.setResultado(resultado);
             analise.setStatus("CONCLUIDA");
         } catch (RestClientResponseException erro) {
@@ -103,7 +103,7 @@ public class AnaliseCurriculoService {
         return conteudo;
     }
 
-    private Map<String, Object> solicitarAnalise(byte[] pdf, String nomeArquivo) {
+    private Map<String, Object> solicitarAnalise(byte[] pdf, String nomeArquivo, String criteriosRevisao) {
         ByteArrayResource arquivo = new ByteArrayResource(pdf) {
             @Override
             public String getFilename() {
@@ -112,6 +112,9 @@ public class AnaliseCurriculoService {
         };
         MultipartBodyBuilder multipart = new MultipartBodyBuilder();
         multipart.part("arquivo", arquivo).filename(nomeArquivo).contentType(MediaType.APPLICATION_PDF);
+        if (StringUtils.hasText(criteriosRevisao)) {
+            multipart.part("criterios_revisao", criteriosRevisao.trim()).contentType(MediaType.TEXT_PLAIN);
+        }
         Map<String, Object> resultado = restClient.post()
             .uri(pythonApiUrl + "/analisar")
             .contentType(MediaType.MULTIPART_FORM_DATA)

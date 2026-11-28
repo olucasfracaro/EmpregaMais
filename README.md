@@ -94,6 +94,12 @@ precisa permitir requisições CORS originadas pelo domínio publicado na Vercel
 4. A tela Acompanhar consulta `GET /acompanhar/analises` e mostra o resultado,
    status e datas da execução.
 
+Na ficha, a equipe pode informar competências desejáveis separadas por vírgula
+ou linha. A API Python compara os termos com o texto extraído do currículo e
+devolve quais tiveram evidência textual localizada; isso não é uma avaliação
+de proficiência. A ficha aberta a partir de Acompanhar consulta somente o
+candidato selecionado, inclusive para o perfil Monitor.
+
 ## Benefícios esperados
 
 - maior agilidade na triagem inicial;

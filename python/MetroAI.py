@@ -49,6 +49,7 @@ else:
 # Constantes
 TAMANHO_MAXIMO_PDF = 10 * 1024 * 1024
 TAMANHO_MAXIMO_TEXTO = 30_000
+TAMANHO_MAXIMO_CRITERIOS = 1000
 PASTA_CURRICULOS = Path(__file__).resolve().parent / "Portifólios_treino"
 
 HABILIDADES_CONHECIDAS = {
@@ -95,6 +96,9 @@ class AnaliseCurriculoResponse(BaseModel):
     experiencia: List[str] = Field(..., alias="Experiência")
     relatorio: str = Field(..., alias="Relatório")
     criterios_observados: List[str] = Field(..., alias="Critérios observados")
+    criterios_desejaveis: List[str] = Field(default_factory=list, alias="Critérios desejáveis")
+    competencias_localizadas: List[str] = Field(default_factory=list, alias="Competências localizadas")
+    competencias_sem_evidencia: List[str] = Field(default_factory=list, alias="Competências sem evidência textual")
     fonte_resumo: str = Field(..., alias="Fonte do resumo")
     arquivo: str = Field(..., alias="Arquivo")
 
@@ -157,16 +161,33 @@ def identificar_area(habilidades: List[str]) -> str:
     return area if quantidade else "Não identificada"
 
 
-def extrair_criterios_observados(texto: str, criterios: Optional[str]) -> List[str]:
+def separar_criterios(criterios: Optional[str]) -> List[str]:
     if not criterios:
         return []
     encontrados = []
-    texto_normalizado = normalizar(texto)
+    vistos = set()
     for criterio in re.split(r"[,;\n]", criterios):
         criterio = criterio.strip()
-        if criterio and normalizar(criterio) in texto_normalizado:
-            encontrados.append(f"Evidência encontrada para: {criterio}")
+        chave = normalizar(criterio)
+        if criterio and chave not in vistos:
+            vistos.add(chave)
+            encontrados.append(criterio[:120])
+        if len(encontrados) >= 30:
+            break
     return encontrados
+
+
+def comparar_criterios(texto: str, criterios: Optional[str]) -> tuple[List[str], List[str], List[str], List[str]]:
+    desejaveis = separar_criterios(criterios)
+    texto_normalizado = normalizar(texto)
+    localizadas = [
+        criterio for criterio in desejaveis
+        if re.search(rf"(?<!\w){re.escape(normalizar(criterio))}(?!\w)", texto_normalizado)
+    ]
+    conjunto_localizadas = {normalizar(criterio) for criterio in localizadas}
+    sem_evidencia = [criterio for criterio in desejaveis if normalizar(criterio) not in conjunto_localizadas]
+    observados = [f"Evidência textual encontrada para: {criterio}" for criterio in localizadas]
+    return desejaveis, localizadas, sem_evidencia, observados
 
 
 def analisar_localmente(texto: str, arquivo: str, criterios_revisao: Optional[str] = None) -> dict:
@@ -175,7 +196,7 @@ def analisar_localmente(texto: str, arquivo: str, criterios_revisao: Optional[st
     area = identificar_area(habilidades)
     formacao = linhas_relevantes(texto, ("graduacao", "graduação", "bacharel", "tecnologo", "tecnólogo", "licenciatura", "mestrado", "doutorado", "formacao", "formação", "universidade", "faculdade"))
     experiencia = linhas_relevantes(texto, ("experiencia", "experiência", "atuou", "trabalhou", "empresa", "cargo", "estagio", "estágio"))
-    criterios_observados = extrair_criterios_observados(texto, criterios_revisao)
+    criterios_desejaveis, competencias_localizadas, competencias_sem_evidencia, criterios_observados = comparar_criterios(texto, criterios_revisao)
     partes = [f"{candidato}: perfil com foco em {area.lower()}."]
     if habilidades:
         partes.append(f"Habilidades identificadas: {', '.join(habilidades)}.")
@@ -183,8 +204,12 @@ def analisar_localmente(texto: str, arquivo: str, criterios_revisao: Optional[st
         partes.append(f"Formação mencionada: {formacao[0]}.")
     if experiencia:
         partes.append(f"Experiência mencionada: {experiencia[0]}.")
-    if criterios_revisao and not criterios_observados:
-        partes.append("Nenhuma evidência textual foi encontrada para os critérios de revisão informados.")
+    if criterios_desejaveis:
+        if competencias_localizadas:
+            partes.append(f"Competências desejáveis com evidência textual: {', '.join(competencias_localizadas)}.")
+        if competencias_sem_evidencia:
+            partes.append(f"Sem evidência textual encontrada para: {', '.join(competencias_sem_evidencia)}.")
+        partes.append("A comparação aponta apenas termos localizados no currículo e não confirma nível de proficiência.")
     return {
         "Candidato": candidato,
         "Área": area,
@@ -194,6 +219,9 @@ def analisar_localmente(texto: str, arquivo: str, criterios_revisao: Optional[st
         "Experiência": experiencia,
         "Relatório": " ".join(partes),
         "Critérios observados": criterios_observados,
+        "Critérios desejáveis": criterios_desejaveis,
+        "Competências localizadas": competencias_localizadas,
+        "Competências sem evidência textual": competencias_sem_evidencia,
         "Fonte do resumo": "Análise local baseada no texto do currículo.",
         "Arquivo": arquivo,
     }
@@ -259,6 +287,8 @@ async def analisar_upload(
     
     if not arquivo.filename or Path(arquivo.filename).suffix.lower() != ".pdf":
         raise HTTPException(status_code=415, detail="Envie um arquivo .pdf.")
+    if criterios_revisao and len(criterios_revisao) > TAMANHO_MAXIMO_CRITERIOS:
+        raise HTTPException(status_code=422, detail="Os critérios de revisão devem ter no máximo 1000 caracteres.")
     
     conteudo = await arquivo.read(TAMANHO_MAXIMO_PDF + 1)
     if len(conteudo) > TAMANHO_MAXIMO_PDF:

@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,16 +16,27 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.empregamais.api.Candidato.Candidato;
+import com.empregamais.api.Candidato.CandidatoResponseDTO;
+import com.empregamais.api.Candidato.CandidatoService;
+
 @RestController
+@Validated
 @RequestMapping("/acompanhar/analises")
 public class AnaliseController {
 
     private final AnaliseService analiseService;
     private final AnaliseCurriculoService analiseCurriculoService;
+    private final CandidatoService candidatoService;
 
-    public AnaliseController(AnaliseService analiseService, AnaliseCurriculoService analiseCurriculoService) {
+    public AnaliseController(
+        AnaliseService analiseService,
+        AnaliseCurriculoService analiseCurriculoService,
+        CandidatoService candidatoService
+    ) {
         this.analiseService = analiseService;
         this.analiseCurriculoService = analiseCurriculoService;
+        this.candidatoService = candidatoService;
     }
 
     @GetMapping
@@ -43,6 +56,16 @@ public class AnaliseController {
                         .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/{id}/candidato")
+    public ResponseEntity<CandidatoResponseDTO> getCandidatoDaAnalise(@PathVariable Long id) {
+        Optional<Analise> analise = analiseService.buscarAnalisePorId(id);
+        if (analise.isEmpty()) return ResponseEntity.notFound().build();
+
+        Optional<Candidato> candidato = candidatoService.buscarCandidatoPorId(analise.get().getCandidatoId());
+        if (candidato.isEmpty()) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(toCandidatoDTO(candidato.get()));
+    }
+
     @PostMapping
     public ResponseEntity<AnaliseResponseDTO> criarAnalise(@RequestBody AnaliseRequestDTO request) {
         Analise novoAnalise = new Analise();
@@ -58,8 +81,12 @@ public class AnaliseController {
     }
 
     @PostMapping("/candidatos/{candidatoId}")
-    public ResponseEntity<AnaliseResponseDTO> analisarCandidato(@PathVariable Long candidatoId) {
-        Analise analise = analiseCurriculoService.analisarCandidato(candidatoId);
+    public ResponseEntity<AnaliseResponseDTO> analisarCandidato(
+        @PathVariable Long candidatoId,
+        @Valid @RequestBody(required = false) AnaliseCurriculoRequestDTO request
+    ) {
+        String criteriosRevisao = request == null ? null : request.criteriosRevisao();
+        Analise analise = analiseCurriculoService.analisarCandidato(candidatoId, criteriosRevisao);
         return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(analise));
     }
 
@@ -82,6 +109,14 @@ public class AnaliseController {
             analise.getErro(),
             analise.getCreatedAt(),
             analise.getFinishedAt()
+        );
+    }
+
+    private CandidatoResponseDTO toCandidatoDTO(Candidato candidato) {
+        return new CandidatoResponseDTO(
+            candidato.getId(), candidato.getNome(), candidato.getTelefone(), candidato.getEmail(),
+            candidato.getMensagem(), candidato.getCurriculoPath(), candidato.getStatus(),
+            candidato.getCreatedAt(), candidato.getUpdatedAt()
         );
     }
 }
