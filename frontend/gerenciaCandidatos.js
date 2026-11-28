@@ -125,6 +125,11 @@ const comercialView = document.getElementById('comercialView');
 const analysisGrid = document.getElementById('analysisGrid');
 if (analysisGrid) {
     analysisGrid.addEventListener('click', event => {
+        const deleteButton = event.target.closest('[data-delete-analysis]');
+        if (deleteButton) {
+            apagarAnalise(deleteButton.dataset.deleteAnalysis, deleteButton);
+            return;
+        }
         const candidateLink = event.target.closest('[data-analysis-candidate-id]');
         if (candidateLink) abrirFichaCandidatoDaAnalise(candidateLink.dataset.analysisCandidateId, candidateLink.dataset.analysisId, candidateLink);
     });
@@ -689,7 +694,16 @@ async function analisarCurriculoCandidato(candidatoId, button) {
         if (!response.ok) throw new Error(resultado.detail || resultado.message || `Não foi possível iniciar a análise (HTTP ${response.status}).`);
         if (resultado.status === 'FALHA') throw new Error(resultado.erro || 'A análise não foi concluída.');
 
-        showToast(`Análise do currículo de ${candidato.nome} concluída.`, 'fa-circle-check');
+        showToast(`Análise do currículo de ${candidato.nome} concluída.`, 'fa-circle-check', {
+            action: {
+                label: 'ver análise',
+                run: () => {
+                    closeModal();
+                    mostrarModulo('acompanhar');
+                    carregarAnalises();
+                }
+            }
+        });
         window.dispatchEvent(new CustomEvent('empregamais:analysis-created', { detail: { analysis: resultado } }));
         button.innerHTML = '<i class="fa-solid fa-circle-check"></i><span>Análise concluída</span>';
         setTimeout(() => {
@@ -930,12 +944,27 @@ function fecharCurriculo() {
 }
 
 
-function showToast(message, icon = 'fa-circle-check') {
-    if (message !== 'Alterações salvas com sucesso!') return;
+function showToast(message, icon = 'fa-circle-check', options = {}) {
+    if (message !== 'Alterações salvas com sucesso!' && !options.force && !options.action) return;
     if (!toastContainer) return;
     const toast = document.createElement('div');
     toast.className = 'toast';
-    toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+    const iconElement = document.createElement('i');
+    iconElement.className = `fa-solid ${icon}`;
+    const messageElement = document.createElement('span');
+    messageElement.textContent = message;
+    toast.append(iconElement, messageElement);
+    if (options.action?.label && typeof options.action.run === 'function') {
+        const actionButton = document.createElement('button');
+        actionButton.type = 'button';
+        actionButton.className = 'toast-action';
+        actionButton.textContent = options.action.label;
+        actionButton.addEventListener('click', () => {
+            toast.remove();
+            options.action.run();
+        });
+        toast.append(actionButton);
+    }
     toastContainer.appendChild(toast);
 
     setTimeout(() => {
@@ -943,7 +972,7 @@ function showToast(message, icon = 'fa-circle-check') {
         toast.style.transform = 'translateY(10px)';
         toast.style.transition = 'all 0.3s ease';
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, options.action ? 7000 : 3000);
 }
 
 
@@ -1165,6 +1194,29 @@ function renderizarResultadoAnalise(analise) {
         ${fonte ? `<small class="analysis-result-source">${escaparTextoAnalise(fonte)}</small>` : ''}
     </div>`;
 }
+async function apagarAnalise(id, button) {
+    if (!id || !window.confirm(`Apagar a análise #${id}? Esta ação não pode ser desfeita.`)) return;
+
+    const conteudoOriginal = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    try {
+        if (getDataMode() !== 'mock') {
+            const response = await authenticatedFetch(`${API_BASE_URL}/acompanhar/analises/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error(`Não foi possível apagar a análise (${response.status}).`);
+        }
+        analisesCurriculo = analisesCurriculo.filter(analise => String(analise.id) !== String(id));
+        atualizarResumoAnalises();
+        renderizarAnalises();
+        showToast(`Análise #${id} apagada.`, 'fa-trash-can', { force: true });
+    } catch (error) {
+        showToast(error.message || 'Não foi possível apagar a análise.', 'fa-triangle-exclamation', { force: true });
+        if (button.isConnected) {
+            button.disabled = false;
+            button.innerHTML = conteudoOriginal;
+        }
+    }
+}
 function renderizarAnalises() {
     if (!analysisGrid) return;
     const termo = (document.getElementById('analysisSearch')?.value ?? '').trim().toLocaleLowerCase('pt-BR');
@@ -1196,7 +1248,7 @@ function renderizarAnalises() {
             ? `<button class="analysis-candidate-link" type="button" data-analysis-id="${escaparTextoAnalise(analise.id)}" data-analysis-candidate-id="${escaparTextoAnalise(candidateId)}" aria-label="Abrir ficha do candidato ${escaparTextoAnalise(candidateId)}"><i class="fa-regular fa-address-card"></i><span>Candidato #${escaparTextoAnalise(candidateId)}</span><i class="fa-solid fa-arrow-up-right-from-square"></i></button>`
             : '<span class="analysis-candidate-unavailable">Candidato não vinculado</span>';
         return `<article class="analysis-card" data-analysis-id="${escaparTextoAnalise(analise.id)}" data-candidate-id="${escaparTextoAnalise(analise.candidatoId)}">
-            <header><div class="analysis-card-title"><strong>Análise #${escaparTextoAnalise(analise.id ?? '—')}</strong>${candidateLink}</div><span class="analysis-status is-${classeStatus}">${status}</span></header>
+            <header><div class="analysis-card-title"><strong>Análise #${escaparTextoAnalise(analise.id ?? '—')}</strong>${candidateLink}</div><div class="analysis-card-actions"><span class="analysis-status is-${classeStatus}">${status}</span><button class="analysis-delete-button" type="button" data-delete-analysis="${escaparTextoAnalise(analise.id)}" aria-label="Apagar análise ${escaparTextoAnalise(analise.id)}" title="Apagar análise"><i class="fa-regular fa-trash-can"></i></button></div></header>
             <div class="analysis-card-meta"><div><span>Modelo</span><strong title="${escaparTextoAnalise(analise.modelo || '—')}">${escaparTextoAnalise(analise.modelo || '—')}</strong></div><div><span>Iniciada em</span><strong>${formatarDataAnalise(analise.createdAt)}</strong></div><div><span>Finalizada em</span><strong>${formatarDataAnalise(analise.finishedAt)}</strong></div></div>
             ${renderizarResultadoAnalise(analise)}
         </article>`;

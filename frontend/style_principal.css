@@ -430,6 +430,11 @@ body.dark-mode .candidate-table .avatar-circle { border-color:#4c1d2b; backgroun
 .analysis-card-title { display:flex; flex-direction:column; gap:5px; }
 .analysis-card-title strong { color:var(--text-primary); font-size:.88rem; }
 .analysis-card-title span,.analysis-card-meta span { color:var(--text-secondary); font-size:.7rem; }
+.analysis-card-actions { display:flex; align-items:center; gap:8px; }
+.analysis-delete-button { display:grid; width:32px; height:32px; flex:0 0 32px; place-items:center; border:1px solid var(--border-subtle); border-radius:9px; background:var(--bg-card); color:var(--text-secondary); cursor:pointer; transition:color .18s,border-color .18s,background .18s; }
+.analysis-delete-button:hover { border-color:#fecaca; background:#fef2f2; color:#b91c1c; }
+.analysis-delete-button:disabled { cursor:wait; opacity:.65; }
+body.dark-mode .analysis-delete-button:hover { border-color:#7f1d1d; background:#450a0a; color:#fca5a5; }
 .analysis-candidate-link { display:inline-flex; align-items:center; gap:6px; width:fit-content; padding:0; border:0; background:transparent; color:var(--red-primary); font:600 .72rem Inter,sans-serif; text-align:left; cursor:pointer; }
 .analysis-candidate-link:hover { color:var(--red-hover); text-decoration:underline; }
 .analysis-candidate-link:disabled { color:var(--text-secondary); cursor:wait; }
@@ -758,6 +763,9 @@ body.quote-detail-open { overflow:hidden; }
     font-size: 0.85rem;
     transition: all 0.3s ease;
 }
+.toast-action { flex:0 0 auto; padding:0; border:0; background:none; color:var(--red-primary); font:700 .8rem Inter,sans-serif; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+.toast-action:hover { color:var(--red-hover); }
+.toast-action:focus-visible { border-radius:3px; outline:2px solid var(--red-primary); outline-offset:3px; }
 
 .toast-success i { color: #16a34a; }
 .toast-info i { color: var(--red-primary); }
