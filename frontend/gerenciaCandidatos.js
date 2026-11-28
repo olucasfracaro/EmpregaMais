@@ -1,5 +1,6 @@
 import { API_BASE_URL, SUPABASE_URL } from './config.js';
 import { authenticatedFetch, requireValidSession, supabase, ROLES } from './auth.js?v=202611181938';
+import { getDataMode, reportDataSource, registerDiagnostics, checkApiStatus } from './apiStatus.js?v=20261126-ui4';
 
 const pdfjsLib = globalThis.pdfjsLib;
 if (pdfjsLib) {
@@ -69,6 +70,16 @@ let candidatos = [];
 const alteracoesPendentes = new Map();
 const exclusoesPendentes = new Map();
 const curriculoBaseUrl = 'https://kampbrxrosxtspcmgewr.supabase.co/storage/v1/object/public/curriculos/';
+let fonteCandidatos = 'api';
+let gerenciarHabilitado = false;
+const usandoDadosFicticios = () => fonteCandidatos === 'mock' || fonteCandidatos === 'fallback';
+
+const mockAnalises = [
+    { id: 101, status: 'Em andamento', resultado: 'Perfil compatível com a vaga. Aguardando entrevista técnica.' },
+    { id: 102, status: 'Concluída', resultado: 'Candidato aprovado na triagem inicial.' },
+    { id: 103, status: 'Pendente' }
+];
+
 const candidatosCacheKey = 'candidatosCache-v2';
 const candidatosCacheTtl = 5 * 60 * 1000;
 
@@ -101,8 +112,6 @@ const statConcluidoVal = document.getElementById('statConcluidoVal');
 const statPendenteVal = document.getElementById('statPendenteVal');
 const statRecusadoVal = document.getElementById('statRecusadoVal');
 const darkModeToggle = document.getElementById('darkModeToggle');
-const apiStatusIndicator = document.getElementById('apiStatusIndicator');
-const apiStatusText = document.getElementById('apiStatusText');
 
 const nomeUsuario = document.getElementById('nome_usuario');
 const avatarUsuario = document.getElementById('avatar_usuario');
@@ -365,6 +374,17 @@ async function confirmarAlteracoes() {
         return;
     }
 
+    if (usandoDadosFicticios()) {
+        candidatos = candidatos.filter(c => !exclusoesPendentes.has(Number(c.id)));
+        alteracoesPendentes.clear();
+        exclusoesPendentes.clear();
+        renderTable();
+        updateStats();
+        atualizarBotaoConfirmacao();
+        showToast('Dados fictícios: alterações aplicadas apenas localmente.', 'fa-flask');
+        return;
+    }
+
     if (confirmChangesButton) {
         confirmChangesButton.disabled = true;
         confirmChangesButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Salvando…</span>';
@@ -414,18 +434,30 @@ async function confirmarAlteracoes() {
 
 
 async function carregarDadosIniciais() {
-    let dados = receberCandidatosDoCache();
-    if (!dados) {
-        try {
-            dados = await receberDadosComFallback();
-        } catch (error) {
-            console.warn("Servidor API indisponível. Carregando dados fictícios...");
-            dados = mockData;
+    let dados;
+
+    if (getDataMode() === 'mock') {
+        dados = mockData.map(candidato => ({ ...candidato }));
+        fonteCandidatos = 'mock';
+    } else {
+        dados = receberCandidatosDoCache();
+        if (dados) {
+            fonteCandidatos = 'cache';
+        } else {
+            try {
+                dados = await receberDadosComFallback();
+                fonteCandidatos = 'api';
+            } catch (error) {
+                console.warn("Servidor API indisponível. Carregando dados fictícios...");
+                dados = mockData.map(candidato => ({ ...candidato }));
+                fonteCandidatos = 'fallback';
+            }
         }
     }
 
+    reportDataSource('candidatos', fonteCandidatos);
     candidatos = normalizarDados(dados);
-    salvarCandidatosNoCache(candidatos);
+    if (!usandoDadosFicticios()) salvarCandidatosNoCache(candidatos);
     atualizarBotaoConfirmacao();
     renderTable();
     updateStats();
@@ -587,7 +619,7 @@ window.openCandidateModal = function(id) {
     candidateDetailContent.innerHTML = `
         <section class="quote-detail-status${marcadoParaExclusao ? ' is-locked' : ''}"><span>Status atual</span>${window.renderStatusDropdown(candidate.id, candidate.status, 'detail', 'candidate')}</section>
         <section class="quote-detail-section"><h3><i class="fa-regular fa-address-card"></i> Candidato</h3><div class="quote-detail-person"><span class="quote-avatar">${escaparHtml(getInitials(candidate.nome))}</span><div><strong>${escaparHtml(candidate.nome || 'Candidato sem nome')}</strong><span>${escaparHtml(candidate.cargo || '')}</span></div></div>${info('E-mail', email, 'fa-envelope')}${email ? `<a class="quote-contact-link" href="mailto:${escaparHtml(email)}"><i class="fa-regular fa-paper-plane"></i> Enviar e-mail</a>` : ''}${info('Telefone', telefone, 'fa-phone')}${telefoneDigitos ? `<a class="quote-contact-link" href="https://wa.me/55${telefoneDigitos}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Conversar no WhatsApp</a>` : ''}</section>
-        <section class="quote-detail-section"><h3><i class="fa-solid fa-file-lines"></i> Currículo</h3>${info('Arquivo', arquivo || 'Currículo não disponível', iconeArquivo)}${arquivo ? `<div><button class="quote-contact-link" type="button" data-pdf-action="Visualizar"><i class="fa-regular fa-eye"></i> Visualizar currículo</button></div><div><button class="quote-contact-link" type="button" data-pdf-action="Download"><i class="fa-solid fa-download"></i> Baixar currículo</button></div>` : ''}${info('Tamanho', candidate.pdfSize || (arquivo ? 'Calculando…' : ''), 'fa-weight-hanging', 'candidatePdfSize')}${info('Enviado em', candidate.dataEnvio, 'fa-calendar')}</section>
+        <section class="quote-detail-section"><h3><i class="fa-solid fa-file-lines"></i> Currículo</h3>${info('Arquivo', arquivo || 'Currículo não disponível', iconeArquivo)}${arquivo ? `<div><button class="quote-contact-link" type="button" data-pdf-action="Visualizar"><i class="fa-regular fa-eye"></i> Visualizar currículo</button></div><div><button class="quote-contact-link" type="button" data-pdf-action="Download"><i class="fa-solid fa-download"></i> Baixar currículo</button></div>` : ''}${info('Tamanho', candidate.pdfSize || (arquivo ? (usandoDadosFicticios() ? 'Indisponível (dados fictícios)' : 'Calculando…') : ''), 'fa-weight-hanging', 'candidatePdfSize')}${info('Enviado em', candidate.dataEnvio, 'fa-calendar')}</section>
         <section class="quote-detail-section"><h3><i class="fa-solid fa-comments"></i> Mensagem</h3><div class="quote-detail-notes"><small>Mensagem do candidato</small><p>${escaparHtml(candidate.mensagem || 'Nenhuma mensagem enviada.')}</p></div></section>
         <section class="quote-delete-section"><div><strong>Excluir candidato</strong><p>Marca o candidato e o currículo anexo para exclusão. Nada é apagado até você salvar as alterações.</p></div><button type="button" data-candidate-delete>${marcadoParaExclusao ? '<i class="fa-solid fa-rotate-left"></i> Desfazer exclusão' : '<i class="fa-regular fa-trash-can"></i> Apagar candidato'}</button></section>
         <footer class="quote-detail-footer">Candidatura #${escaparHtml(candidate.id)} · Enviada em ${escaparHtml(candidate.dataEnvio || 'data indisponível')}</footer>`;
@@ -693,6 +725,7 @@ function curriculoEhImagem(caminho) {
 }
 
 async function atualizarTamanhoCurriculo(candidate) {
+    if (usandoDadosFicticios()) return;
     const fileUrl = obterCurriculoUrl(candidate.curriculoPath);
     if (!fileUrl) return;
 
@@ -723,6 +756,11 @@ async function atualizarTamanhoCurriculo(candidate) {
 
 window.simulatePdfAction = function(action) {
     if (!activeCandidateId) return;
+
+    if (usandoDadosFicticios()) {
+        showToast('Currículos não estão disponíveis nos dados fictícios.', 'fa-flask');
+        return;
+    }
 
     const candidate = candidatos.find(
         c => c.id === activeCandidateId
@@ -859,34 +897,7 @@ function setupDarkMode() {
 }
 
 async function verificarStatusApi(endpoint = `${API_BASE_URL}/gerenciar/candidatos`) {
-    if (!apiStatusIndicator || !apiStatusText) return;
-
-    apiStatusIndicator.className = 'api-status-indicator is-checking';
-    apiStatusText.textContent = 'Verificando status da API...';
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-
-    try {
-        const response = await authenticatedFetch(endpoint, {
-            method: 'GET',
-            signal: controller.signal,
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (!response.ok) {
-            throw new Error(`API retornou ${response.status}`);
-        }
-
-        apiStatusIndicator.className = 'api-status-indicator is-online';
-        apiStatusText.textContent = 'API online';
-    } catch (error) {
-        apiStatusIndicator.className = 'api-status-indicator is-offline';
-        apiStatusText.textContent = 'API offline';
-        console.warn('Não foi possível verificar o status da API:', error);
-    } finally {
-        clearTimeout(timeout);
-    }
+    await checkApiStatus(endpoint);
 }
 
 window.addEventListener('empregamais:check-api-status', event => {
@@ -900,9 +911,43 @@ async function atualizarStatusETabela() {
     }
 
     await verificarStatusApi();
+    if (getDataMode() === 'mock') return;
     localStorage.removeItem(candidatosCacheKey);
     await carregarDadosIniciais();
 }
+
+registerDiagnostics('candidatos', {
+    label: 'Candidatos',
+    pending: () => contarPendencias(),
+    rows: () => [
+        ['Registros carregados', candidatos.length],
+        ['Alterações pendentes', contarPendencias()],
+        ['Cache local', descreverCacheCandidatos()]
+    ]
+});
+
+function descreverCacheCandidatos() {
+    try {
+        const cache = JSON.parse(localStorage.getItem(candidatosCacheKey));
+        if (!cache || !Array.isArray(cache.dados)) return 'Vazio';
+        const idade = Date.now() - cache.timestamp;
+        return idade >= candidatosCacheTtl
+            ? 'Expirado'
+            : `Válido (${Math.round(idade / 1000)} s de ${candidatosCacheTtl / 1000} s)`;
+    } catch {
+        return 'Indisponível';
+    }
+}
+
+window.addEventListener('empregamais:data-mode-change', async () => {
+    if (!gerenciarHabilitado) return;
+    alteracoesPendentes.clear();
+    exclusoesPendentes.clear();
+    localStorage.removeItem(candidatosCacheKey);
+    closeModal();
+    await carregarDadosIniciais();
+    if (document.getElementById('acompanharView')?.hidden === false) carregarAnalises();
+});
 
 const MODULE_PERMISSIONS = {
     gerenciar: [ROLES.ADMIN, ROLES.GESTOR, ROLES.RH],
@@ -950,10 +995,15 @@ async function carregarAnalises() {
     if (!analysisGrid) return;
 
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/acompanhar/analises`);
-        if (!response.ok) throw new Error(`Erro ao buscar análises: ${response.status}`);
+        let analises;
+        if (getDataMode() === 'mock') {
+            analises = mockAnalises;
+        } else {
+            const response = await authenticatedFetch(`${API_BASE_URL}/acompanhar/analises`);
+            if (!response.ok) throw new Error(`Erro ao buscar análises: ${response.status}`);
+            analises = await response.json();
+        }
 
-        const analises = await response.json();
         if (!Array.isArray(analises) || analises.length === 0) {
             analysisGrid.innerHTML = '<p>Nenhuma análise encontrada.</p>';
             return;
@@ -1021,6 +1071,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     restoreAdminModuleScroll();
 
     if (podeAcessarModulo(role, 'gerenciar')) {
+        gerenciarHabilitado = true;
         verificarStatusApi();
         setInterval(atualizarStatusETabela, 60 * 3000);
         await carregarDadosIniciais();

@@ -53,6 +53,7 @@ public class SecurityConfig {
                     "/principal.html",
                     "/nav.js",
                     "/masks.js",
+                    "/apiStatus.js",
                     "/script.js",
                     "/loginUsuario.js",
                     "/auth.js",

@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "./config.js";
 import { authenticatedFetch } from "./auth.js?v=202611181938";
+import { getDataMode, reportDataSource, registerDiagnostics } from "./apiStatus.js?v=20261126-ui4";
 
 const $ = selector => document.querySelector(selector);
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
@@ -124,15 +125,24 @@ async function loadQuotes() {
   $("#refreshQuotes").disabled = true;
   $("#quoteCount").textContent = "Carregando orçamentos…";
   try {
-    const response = await authenticatedFetch(`${API_BASE_URL}/comercial/orcamentos`);
-    if (!response.ok) throw new Error(response.status === 403 ? "Seu perfil não tem acesso à área comercial." : `Não foi possível carregar os orçamentos (${response.status}).`);
-    const data = await response.json();
-    quotes = Array.isArray(data) ? data : [];
-    usingMockData = false;
-    render();
+    if (getDataMode() === "mock") {
+      usingMockData = true;
+      quotes = mockQuotes.map(quote => ({ ...quote }));
+      reportDataSource("orcamentos", "mock");
+      render();
+    } else {
+      const response = await authenticatedFetch(`${API_BASE_URL}/comercial/orcamentos`);
+      if (!response.ok) throw new Error(response.status === 403 ? "Seu perfil não tem acesso à área comercial." : `Não foi possível carregar os orçamentos (${response.status}).`);
+      const data = await response.json();
+      quotes = Array.isArray(data) ? data : [];
+      usingMockData = false;
+      reportDataSource("orcamentos", "api");
+      render();
+    }
   } catch {
     usingMockData = true;
     quotes = mockQuotes.map(quote => ({ ...quote }));
+    reportDataSource("orcamentos", "fallback");
     render();
   } finally {
     loading = false;
@@ -283,6 +293,18 @@ setupStatusFilter(document.getElementById("candidateFilter"));
 $("#quoteSearch").addEventListener("input", render);
 $("#quoteFilter").addEventListener("change", render);
 $("#saveQuoteChanges").addEventListener("click", saveStatuses);
+registerDiagnostics("orcamentos", {
+  label: "Orçamentos",
+  pending: () => pendingTotal(),
+  rows: () => [["Registros carregados", quotes.length], ["Alterações pendentes", pendingTotal()]]
+});
+window.addEventListener("empregamais:data-mode-change", () => {
+  pendingStatuses.clear();
+  pendingDeletes.clear();
+  closeDetail();
+  const reload = () => (loading ? setTimeout(reload, 150) : loadQuotes());
+  reload();
+});
 $("#refreshQuotes").addEventListener("click", () => {
   if (pendingTotal() && !window.confirm("Há alterações não salvas. Descartar e atualizar a lista?")) return;
   pendingStatuses.clear();
