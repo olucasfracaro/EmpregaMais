@@ -357,12 +357,26 @@
     </div>
 
     <div id="acompanharView" class="module-view" hidden>
-        <section class="module-card">
-            <i class="fa-solid fa-route"></i>
-            <h1>Acompanhar candidatos</h1>
-            <p>Acompanhe o andamento das análises e seleções realizadas no sistema.</p>
-            <div id="analysisGrid" class="analysis-grid"></div>
-        </section>
+        <main class="commercial-dashboard analysis-dashboard" data-analyses-endpoint="/acompanhar/analises" data-candidates-endpoint="/gerenciar/candidatos">
+            <header class="commercial-heading">
+                <div><span class="commercial-eyebrow">RECRUTAMENTO E SELEÇÃO</span><h1>Acompanhar análises</h1><p>Consulte o andamento e os resultados das análises de currículos.</p></div>
+                <div class="candidate-heading-actions"><button id="refreshAnalyses" class="commercial-refresh" type="button" title="Recarregar análises"><i class="fa-solid fa-rotate-right"></i><span>Atualizar</span></button></div>
+            </header>
+            <section class="quote-metrics analysis-metrics" aria-label="Resumo das análises">
+                <article class="quote-metric"><span>Total de análises</span><strong id="analysisTotal">—</strong><i class="fa-solid fa-layer-group"></i></article>
+                <article class="quote-metric"><span>Em andamento</span><strong id="analysisRunning">—</strong><i class="fa-solid fa-spinner"></i></article>
+                <article class="quote-metric"><span>Concluídas</span><strong id="analysisCompleted">—</strong><i class="fa-solid fa-circle-check"></i></article>
+                <article class="quote-metric"><span>Com falha</span><strong id="analysisFailed">—</strong><i class="fa-solid fa-triangle-exclamation"></i></article>
+            </section>
+            <section class="quote-panel analysis-panel" aria-labelledby="analysisListTitle">
+                <div class="quote-toolbar"><div><h2 id="analysisListTitle">Análises de currículo</h2><p id="analysisCount">Carregando análises…</p></div>
+                    <div class="quote-controls"><label class="quote-search"><i class="fa-solid fa-magnifying-glass"></i><input id="analysisSearch" type="search" placeholder="Buscar por ID, candidato ou status" autocomplete="off" aria-label="Buscar análises"></label>
+                    <select id="analysisFilter" aria-label="Filtrar análises por status"><option value="todos">Todos os status</option><option value="andamento">Em andamento</option><option value="concluida">Concluídas</option><option value="falha">Com falha</option></select></div>
+                </div>
+                <div id="analysisGrid" class="analysis-grid" aria-live="polite" data-list-endpoint="/acompanhar/analises" data-candidate-endpoint-template="/gerenciar/candidatos/{id}"></div>
+                <div id="analysisEmpty" class="quote-empty" hidden><span class="quote-empty-icon"><i class="fa-regular fa-folder-open"></i></span><strong id="analysisEmptyTitle">Nenhuma análise encontrada</strong><p id="analysisEmptyText">As análises de currículo aparecerão nesta lista.</p></div>
+            </section>
+        </main>
     </div>
 
     <div id="comercialView" class="module-view" hidden>

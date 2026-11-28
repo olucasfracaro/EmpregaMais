@@ -1004,23 +1004,78 @@ async function carregarAnalises() {
             analises = await response.json();
         }
 
-        if (!Array.isArray(analises) || analises.length === 0) {
-            analysisGrid.innerHTML = '<p>Nenhuma análise encontrada.</p>';
-            return;
-        }
-
-        analysisGrid.innerHTML = analises.map(analise => `
-            <article class="analysis-card">
-                <strong>Análise #${analise.id ?? '-'}</strong>
-                <span>Status: ${analise.status ?? 'Não informado'}</span>
-                ${analise.resultado ? `<p>${analise.resultado}</p>` : ''}
-            </article>
-        `).join('');
+        analisesCurriculo = Array.isArray(analises) ? analises : [];
+        atualizarResumoAnalises();
+        renderizarAnalises();
     } catch (error) {
         console.error('Não foi possível carregar as análises:', error);
-        analysisGrid.innerHTML = '<p>Não foi possível carregar as análises.</p>';
+        analysisGrid.innerHTML = '<p class="analysis-notice">Não foi possível carregar as análises. Tente novamente.</p>';
+        document.getElementById('analysisCount')?.replaceChildren(document.createTextNode('Falha ao carregar as análises'));
+        document.getElementById('analysisEmpty')?.setAttribute('hidden', '');
     }
 }
+
+let analisesCurriculo = [];
+const normalizarStatusAnalise = analise => {
+    const status = String(analise.status ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+    if (/erro|falh|failed|error/.test(status)) return 'falha';
+    if (/conclu|finaliz|complete|success|aprovad/.test(status)) return 'concluida';
+    return 'andamento';
+};
+const escaparTextoAnalise = valor => String(valor ?? '').replace(/[&<>"']/g, caractere => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[caractere]));
+const formatarDataAnalise = valor => {
+    if (!valor) return '—';
+    const data = new Date(valor);
+    return Number.isNaN(data.getTime()) ? '—' : new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium', timeStyle: 'short' }).format(data);
+};
+function atualizarResumoAnalises() {
+    const totais = { andamento: 0, concluida: 0, falha: 0 };
+    analisesCurriculo.forEach(analise => totais[normalizarStatusAnalise(analise)]++);
+    document.getElementById('analysisTotal')?.replaceChildren(document.createTextNode(String(analisesCurriculo.length)));
+    document.getElementById('analysisRunning')?.replaceChildren(document.createTextNode(String(totais.andamento)));
+    document.getElementById('analysisCompleted')?.replaceChildren(document.createTextNode(String(totais.concluida)));
+    document.getElementById('analysisFailed')?.replaceChildren(document.createTextNode(String(totais.falha)));
+}
+function renderizarAnalises() {
+    if (!analysisGrid) return;
+    const termo = (document.getElementById('analysisSearch')?.value ?? '').trim().toLocaleLowerCase('pt-BR');
+    const filtro = document.getElementById('analysisFilter')?.value ?? 'todos';
+    const filtradas = analisesCurriculo.filter(analise => {
+        const statusTipo = normalizarStatusAnalise(analise);
+        const texto = [analise.id, analise.candidatoId, analise.status, analise.modelo].join(' ').toLocaleLowerCase('pt-BR');
+        return (filtro === 'todos' || statusTipo === filtro) && texto.includes(termo);
+    });
+    const count = document.getElementById('analysisCount');
+    if (count) count.textContent = `${filtradas.length} ${filtradas.length === 1 ? 'análise encontrada' : 'análises encontradas'}`;
+    const empty = document.getElementById('analysisEmpty');
+    const emptyTitle = document.getElementById('analysisEmptyTitle');
+    const emptyText = document.getElementById('analysisEmptyText');
+    if (!filtradas.length) {
+        analysisGrid.innerHTML = '';
+        if (empty) empty.hidden = false;
+        if (emptyTitle) emptyTitle.textContent = analisesCurriculo.length ? 'Nenhuma análise encontrada' : 'Nenhuma análise por aqui';
+        if (emptyText) emptyText.textContent = analisesCurriculo.length ? 'Altere a busca ou o filtro para ver outros resultados.' : 'As análises de currículo aparecerão nesta lista.';
+        return;
+    }
+    if (empty) empty.hidden = true;
+    analysisGrid.innerHTML = filtradas.map(analise => {
+        const tipo = normalizarStatusAnalise(analise);
+        const classeStatus = { andamento: 'running', concluida: 'completed', falha: 'failed' }[tipo];
+        const status = escaparTextoAnalise(analise.status || 'Não informado');
+        let resultado = analise.resultado;
+        if (resultado && typeof resultado === 'object') resultado = Object.entries(resultado).map(([chave, valor]) => `${chave}: ${typeof valor === 'string' ? valor : JSON.stringify(valor)}`).join(' · ');
+        const descricao = resultado || analise.erro || 'O resultado será exibido quando a análise estiver disponível.';
+        return `<article class="analysis-card" data-analysis-id="${escaparTextoAnalise(analise.id)}" data-candidate-id="${escaparTextoAnalise(analise.candidatoId)}">
+            <header><div class="analysis-card-title"><strong>Análise #${escaparTextoAnalise(analise.id ?? '—')}</strong><span>Candidato #${escaparTextoAnalise(analise.candidatoId ?? '—')}</span></div><span class="analysis-status is-${classeStatus}">${status}</span></header>
+            <div class="analysis-card-meta"><div><span>Modelo</span><strong title="${escaparTextoAnalise(analise.modelo || '—')}">${escaparTextoAnalise(analise.modelo || '—')}</strong></div><div><span>Iniciada em</span><strong>${formatarDataAnalise(analise.createdAt)}</strong></div><div><span>Finalizada em</span><strong>${formatarDataAnalise(analise.finishedAt)}</strong></div><div><span>Identificação</span><strong>#${escaparTextoAnalise(analise.candidatoId ?? '—')}</strong></div></div>
+            <p class="analysis-result"><strong>${analise.erro ? 'Detalhe do erro' : 'Resultado'}</strong>${escaparTextoAnalise(descricao)}</p>
+        </article>`;
+    }).join('');
+}
+
+document.getElementById('refreshAnalyses')?.addEventListener('click', carregarAnalises);
+document.getElementById('analysisSearch')?.addEventListener('input', renderizarAnalises);
+document.getElementById('analysisFilter')?.addEventListener('change', renderizarAnalises);
 
 document.addEventListener('DOMContentLoaded', async () => {
     let session;

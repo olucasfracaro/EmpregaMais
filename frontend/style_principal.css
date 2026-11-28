@@ -422,6 +422,29 @@ body.dark-mode .candidate-table .avatar-circle { border-color:#4c1d2b; backgroun
 .module-card { color:var(--text-primary); }
 .analysis-card { border-color:var(--border-subtle); background:var(--bg-card); color:var(--text-primary); }
 .analysis-card span,.analysis-card p { color:var(--text-secondary); }
+.analysis-dashboard .quote-panel { overflow:hidden; border:1px solid var(--border-subtle); border-radius:13px; background:var(--bg-card); box-shadow:var(--shadow-sm); }
+.analysis-dashboard .quote-controls select { min-height:40px; padding:0 34px 0 12px; border:1px solid var(--border-subtle); border-radius:9px; background:var(--bg-card); color:var(--text-primary); font:500 .78rem Inter,sans-serif; }
+.analysis-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr)); gap:14px; padding:18px; margin:0; text-align:left; }
+.analysis-card { min-width:0; padding:19px; border:1px solid var(--border-subtle); border-radius:12px; background:var(--bg-card); box-shadow:var(--shadow-sm); }
+.analysis-card header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.analysis-card-title { display:flex; flex-direction:column; gap:5px; }
+.analysis-card-title strong { color:var(--text-primary); font-size:.88rem; }
+.analysis-card-title span,.analysis-card-meta span { color:var(--text-secondary); font-size:.7rem; }
+.analysis-status { display:inline-flex; align-items:center; gap:6px; padding:6px 9px; border-radius:999px; background:var(--bg-page); color:var(--text-secondary); font-size:.66rem; font-weight:700; white-space:nowrap; }
+.analysis-status::before { width:7px; height:7px; border-radius:50%; background:currentColor; content:""; }
+.analysis-status.is-completed { background:#ecfdf5; color:#047857; }
+.analysis-status.is-running { background:#fffbeb; color:#b45309; }
+.analysis-status.is-failed { background:#fef2f2; color:#b91c1c; }
+body.dark-mode .analysis-status.is-completed { background:#022c22; color:#6ee7b7; }
+body.dark-mode .analysis-status.is-running { background:#422006; color:#fde047; }
+body.dark-mode .analysis-status.is-failed { background:#450a0a; color:#fca5a5; }
+.analysis-card-meta { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:13px 0; border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle); }
+.analysis-card-meta div { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.analysis-card-meta strong { overflow:hidden; color:var(--text-primary); font-size:.73rem; text-overflow:ellipsis; white-space:nowrap; }
+.analysis-result { margin-top:13px; color:var(--text-secondary); font-size:.76rem; line-height:1.55; overflow-wrap:anywhere; }
+.analysis-result strong { display:block; margin-bottom:5px; color:var(--text-primary); font-size:.71rem; }
+.analysis-notice { padding:30px 18px; color:var(--text-secondary); font-size:.8rem; text-align:center; }
+body.dark-mode .analysis-status { background:var(--bg-page); }
 body.dark-mode .status-concluido { background-color:var(--status-concluido-bg); color:var(--status-concluido-text); }
 body.dark-mode .status-pendente { background-color:var(--status-pendente-bg); color:var(--status-pendente-text); }
 body.dark-mode .status-recusado { background-color:var(--status-recusado-bg); color:var(--status-recusado-text); }
