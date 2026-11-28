@@ -444,6 +444,10 @@ body.dark-mode .analysis-status.is-failed { background:#450a0a; color:#fca5a5; }
 .analysis-result { margin-top:13px; color:var(--text-secondary); font-size:.76rem; line-height:1.55; overflow-wrap:anywhere; }
 .analysis-result strong { display:block; margin-bottom:5px; color:var(--text-primary); font-size:.71rem; }
 .analysis-notice { padding:30px 18px; color:var(--text-secondary); font-size:.8rem; text-align:center; }
+.candidate-analyze-button { width:fit-content; min-height:34px; margin-top:3px; padding:0 10px!important; border:1px solid var(--border-subtle)!important; border-radius:8px; background:var(--bg-card)!important; transition:background .18s,border-color .18s,color .18s; }
+.candidate-analyze-button:hover:not(:disabled) { border-color:var(--red-primary)!important; background:var(--red-light)!important; }
+.candidate-analyze-button:disabled { color:var(--text-secondary); cursor:not-allowed; opacity:.58; }
+.candidate-analyze-button.is-analyzing { border-color:var(--red-primary)!important; color:var(--red-primary); }
 body.dark-mode .analysis-status { background:var(--bg-page); }
 body.dark-mode .status-concluido { background-color:var(--status-concluido-bg); color:var(--status-concluido-text); }
 body.dark-mode .status-pendente { background-color:var(--status-pendente-bg); color:var(--status-pendente-text); }

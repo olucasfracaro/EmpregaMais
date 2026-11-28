@@ -131,6 +131,11 @@ if (candidateDetail) {
             window.simulatePdfAction(pdfButton.dataset.pdfAction);
             return;
         }
+        const analyzeButton = event.target.closest('[data-analyze-candidate]');
+        if (analyzeButton) {
+            analisarCurriculoCandidato(analyzeButton.dataset.analyzeCandidate, analyzeButton);
+            return;
+        }
         if (event.target.closest('[data-candidate-delete]') && activeCandidateId) {
             window.apagarCandidato(activeCandidateId);
         }
@@ -615,11 +620,15 @@ window.openCandidateModal = function(id) {
     const email = candidate.email ? sanitizeEmail(candidate.email) : '';
     const arquivo = candidate.curriculoPath ? candidate.curriculoPath.split('/').pop() : '';
     const iconeArquivo = curriculoEhImagem(candidate.curriculoPath) ? 'fa-file-image' : 'fa-file-pdf';
+    const podeAnalisarCurriculo = Boolean(arquivo && /\.pdf$/i.test(arquivo) && !usandoDadosFicticios());
+    const motivoAnaliseIndisponivel = !arquivo || !/\.pdf$/i.test(arquivo)
+        ? 'Este candidato não possui um currículo PDF válido.'
+        : 'A análise só pode ser iniciada com candidatos carregados da API.';
 
     candidateDetailContent.innerHTML = `
         <section class="quote-detail-status${marcadoParaExclusao ? ' is-locked' : ''}"><span>Status atual</span>${window.renderStatusDropdown(candidate.id, candidate.status, 'detail', 'candidate')}</section>
         <section class="quote-detail-section"><h3><i class="fa-regular fa-address-card"></i> Candidato</h3><div class="quote-detail-person"><span class="quote-avatar">${escaparHtml(getInitials(candidate.nome))}</span><div><strong>${escaparHtml(candidate.nome || 'Candidato sem nome')}</strong><span>${escaparHtml(candidate.cargo || '')}</span></div></div>${info('E-mail', email, 'fa-envelope')}${email ? `<a class="quote-contact-link" href="mailto:${escaparHtml(email)}"><i class="fa-regular fa-paper-plane"></i> Enviar e-mail</a>` : ''}${info('Telefone', telefone, 'fa-phone')}${telefoneDigitos ? `<a class="quote-contact-link" href="https://wa.me/55${telefoneDigitos}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Conversar no WhatsApp</a>` : ''}</section>
-        <section class="quote-detail-section"><h3><i class="fa-solid fa-file-lines"></i> Currículo</h3>${info('Arquivo', arquivo || 'Currículo não disponível', iconeArquivo)}${arquivo ? `<div><button class="quote-contact-link" type="button" data-pdf-action="Visualizar"><i class="fa-regular fa-eye"></i> Visualizar currículo</button></div><div><button class="quote-contact-link" type="button" data-pdf-action="Download"><i class="fa-solid fa-download"></i> Baixar currículo</button></div>` : ''}${info('Tamanho', candidate.pdfSize || (arquivo ? (usandoDadosFicticios() ? 'Indisponível (dados fictícios)' : 'Calculando…') : ''), 'fa-weight-hanging', 'candidatePdfSize')}${info('Enviado em', candidate.dataEnvio, 'fa-calendar')}</section>
+        <section class="quote-detail-section"><h3><i class="fa-solid fa-file-lines"></i> Currículo</h3>${info('Arquivo', arquivo || 'Currículo não disponível', iconeArquivo)}${arquivo ? `<div><button class="quote-contact-link" type="button" data-pdf-action="Visualizar"><i class="fa-regular fa-eye"></i> Visualizar currículo</button></div><div><button class="quote-contact-link" type="button" data-pdf-action="Download"><i class="fa-solid fa-download"></i> Baixar currículo</button></div>` : ''}<div><button class="quote-contact-link candidate-analyze-button" type="button" data-analyze-candidate="${escaparHtml(candidate.id)}" ${podeAnalisarCurriculo ? '' : 'disabled'} title="${podeAnalisarCurriculo ? 'Enviar este currículo para análise' : motivoAnaliseIndisponivel}"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Analisar currículo</span></button></div>${info('Tamanho', candidate.pdfSize || (arquivo ? (usandoDadosFicticios() ? 'Indisponível (dados fictícios)' : 'Calculando…') : ''), 'fa-weight-hanging', 'candidatePdfSize')}${info('Enviado em', candidate.dataEnvio, 'fa-calendar')}</section>
         <section class="quote-detail-section"><h3><i class="fa-solid fa-comments"></i> Mensagem</h3><div class="quote-detail-notes"><small>Mensagem do candidato</small><p>${escaparHtml(candidate.mensagem || 'Nenhuma mensagem enviada.')}</p></div></section>
         <section class="quote-delete-section"><div><strong>Excluir candidato</strong><p>Marca o candidato e o currículo anexo para exclusão. Nada é apagado até você salvar as alterações.</p></div><button type="button" data-candidate-delete>${marcadoParaExclusao ? '<i class="fa-solid fa-rotate-left"></i> Desfazer exclusão' : '<i class="fa-regular fa-trash-can"></i> Apagar candidato'}</button></section>
         <footer class="quote-detail-footer">Candidatura #${escaparHtml(candidate.id)} · Enviada em ${escaparHtml(candidate.dataEnvio || 'data indisponível')}</footer>`;
@@ -631,6 +640,38 @@ window.openCandidateModal = function(id) {
 
     if (arquivo && !candidate.pdfSize) atualizarTamanhoCurriculo(candidate);
 };
+
+async function analisarCurriculoCandidato(candidatoId, button) {
+    const candidato = candidatos.find(item => String(item.id) === String(candidatoId));
+    if (!candidato || !button || button.disabled) return;
+
+    const conteudoOriginal = button.innerHTML;
+    button.disabled = true;
+    button.classList.add('is-analyzing');
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Analisando currículo…</span>';
+    try {
+        const response = await authenticatedFetch(`${API_BASE_URL}/acompanhar/analises/candidatos/${encodeURIComponent(candidatoId)}`, { method: 'POST' });
+        let resultado;
+        try { resultado = await response.json(); } catch { resultado = {}; }
+        if (!response.ok) throw new Error(resultado.detail || resultado.message || `Não foi possível iniciar a análise (HTTP ${response.status}).`);
+        if (resultado.status === 'FALHA') throw new Error(resultado.erro || 'A análise não foi concluída.');
+
+        showToast(`Análise do currículo de ${candidato.nome} concluída.`, 'fa-circle-check');
+        window.dispatchEvent(new CustomEvent('empregamais:analysis-created', { detail: { analysis: resultado } }));
+        button.innerHTML = '<i class="fa-solid fa-circle-check"></i><span>Análise concluída</span>';
+        setTimeout(() => {
+            if (!button.isConnected) return;
+            button.disabled = false;
+            button.classList.remove('is-analyzing');
+            button.innerHTML = conteudoOriginal;
+        }, 1800);
+    } catch (error) {
+        showToast(error.message || 'Não foi possível analisar o currículo.', 'fa-triangle-exclamation');
+        button.disabled = false;
+        button.classList.remove('is-analyzing');
+        button.innerHTML = conteudoOriginal;
+    }
+}
 
 function closeModal() {
     activeCandidateId = null;
@@ -951,7 +992,7 @@ window.addEventListener('empregamais:data-mode-change', async () => {
 
 const MODULE_PERMISSIONS = {
     gerenciar: [ROLES.ADMIN, ROLES.GESTOR, ROLES.RH],
-    acompanhar: [ROLES.ADMIN, ROLES.MONITOR],
+    acompanhar: [ROLES.ADMIN, ROLES.MONITOR, ROLES.GESTOR, ROLES.RH],
     comercial: [ROLES.ADMIN, ROLES.COMERCIAL]
 };
 
@@ -1076,6 +1117,9 @@ function renderizarAnalises() {
 document.getElementById('refreshAnalyses')?.addEventListener('click', carregarAnalises);
 document.getElementById('analysisSearch')?.addEventListener('input', renderizarAnalises);
 document.getElementById('analysisFilter')?.addEventListener('change', renderizarAnalises);
+window.addEventListener('empregamais:analysis-created', () => {
+    if (activeModule === 'acompanhar') carregarAnalises();
+});
 
 document.addEventListener('DOMContentLoaded', async () => {
     let session;

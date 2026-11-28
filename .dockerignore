@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+!.env.example
+.vercel
+node_modules
+api/target
+api/.mvn/wrapper/maven-wrapper.jar
+python/__pycache__
+python/.venv

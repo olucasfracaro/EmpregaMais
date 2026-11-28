@@ -46,6 +46,7 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers(
                     "/",
+                    "/health",
                     "/ico.png",
                     "/index.html",
                     "/login.html",
@@ -74,9 +75,9 @@ public class SecurityConfig {
                 .requestMatchers("/gerenciar/candidatos", "/gerenciar/candidatos/**")
                     .hasAnyAuthority("ROLE_ADMIN", "ROLE_GESTOR", "ROLE_RH")
                 .requestMatchers("/acompanhar/analises", "/acompanhar/analises/**")
-                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_MONITOR")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_MONITOR", "ROLE_GESTOR", "ROLE_RH")
                 .requestMatchers("/acompanhar", "/acompanhar/**")
-                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_MONITOR")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_MONITOR", "ROLE_GESTOR", "ROLE_RH")
                 .requestMatchers(
                     "/comercial/solicitantes",
                     "/comercial/solicitantes/**",

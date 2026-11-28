@@ -19,9 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AnaliseController {
 
     private final AnaliseService analiseService;
+    private final AnaliseCurriculoService analiseCurriculoService;
 
-    public AnaliseController(AnaliseService analiseService) {
+    public AnaliseController(AnaliseService analiseService, AnaliseCurriculoService analiseCurriculoService) {
         this.analiseService = analiseService;
+        this.analiseCurriculoService = analiseCurriculoService;
     }
 
     @GetMapping
@@ -53,6 +55,12 @@ public class AnaliseController {
 
         Analise salvo = analiseService.criarAnalise(novoAnalise);
         return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(salvo));
+    }
+
+    @PostMapping("/candidatos/{candidatoId}")
+    public ResponseEntity<AnaliseResponseDTO> analisarCandidato(@PathVariable Long candidatoId) {
+        Analise analise = analiseCurriculoService.analisarCandidato(candidatoId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(analise));
     }
 
     @DeleteMapping("/{id}")

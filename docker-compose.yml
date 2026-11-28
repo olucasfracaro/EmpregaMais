@@ -1,0 +1,43 @@
+services:
+  python-api:
+    build:
+      context: .
+      dockerfile: python/Dockerfile
+    restart: unless-stopped
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-6-luna}
+    expose:
+      - "8000"
+    networks:
+      - empregamais
+
+  spring-api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      python-api:
+        condition: service_healthy
+    environment:
+      PORT: "8080"
+      SUPABASE_URL: ${SUPABASE_URL:-https://kampbrxrosxtspcmgewr.supabase.co}
+      SUPABASE_DB_HOST: ${SUPABASE_DB_HOST:?Defina SUPABASE_DB_HOST no arquivo .env}
+      SUPABASE_DB_PORT: ${SUPABASE_DB_PORT:-5432}
+      SUPABASE_DB_NAME: ${SUPABASE_DB_NAME:-postgres}
+      SUPABASE_DB_USERNAME: ${SUPABASE_DB_USERNAME:?Defina SUPABASE_DB_USERNAME no arquivo .env}
+      SUPABASE_DB_PASSWORD: ${SUPABASE_DB_PASSWORD:?Defina SUPABASE_DB_PASSWORD no arquivo .env}
+      SWAGGER_USERNAME: ${SWAGGER_USERNAME:?Defina SWAGGER_USERNAME no arquivo .env}
+      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD:?Defina SWAGGER_PASSWORD no arquivo .env}
+      APP_PYTHON_API_URL: http://python-api:8000
+      FRONTEND_URL: ${FRONTEND_URL:-https://empregamais-ten.vercel.app}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://empregamais-ten.vercel.app,https://*.vercel.app,http://localhost:[*]}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    networks:
+      - empregamais
+
+networks:
+  empregamais:
+    driver: bridge

@@ -2,6 +2,8 @@ fastapi
 pypdf
 pydantic
 google-generativeai
+openai
 python-dotenv
 python-multipart
 slowapi
+uvicorn[standard]
